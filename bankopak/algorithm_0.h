@@ -11,7 +11,7 @@ void a0_compress(FILE *out, FILE *in) {
   while (banko_reader_board(&reader, &board) == 0) {
     for (int row = 0; row < BOARD_ROWS; row++) {
       for (int col = 0; col < BOARD_COLS; col++) {
-        fputc(board.cells[row*BOARD_COLS+col], out);
+        fputc(board.cells[row][col], out);
       }
     }
   }

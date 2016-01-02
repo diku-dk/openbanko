@@ -109,7 +109,7 @@ void a2_compress(FILE *out, FILE *in) {
       uint8_t column[BOARD_ROWS];
       uint8_t prev = col*10;
       for (int row = 0; row < BOARD_ROWS; row++) {
-        uint8_t cell = board.cells[row*BOARD_COLS+col];
+        uint8_t cell = board.cells[row][col];
         if (cell == 0) {
           column[row] = 0;
         } else {
@@ -143,9 +143,9 @@ void a2_decompress(FILE *out, FILE *in) {
       for (int row = 0; row < BOARD_ROWS; row++) {
         int cell = a2_column_table[table_index][row];
         if (cell == 0) {
-          board.cells[row*BOARD_COLS+col] = 0;
+          board.cells[row][col] = 0;
         } else {
-          prev = board.cells[row*BOARD_COLS+col] = cell + prev;
+          prev = board.cells[row][col] = cell + prev;
         }
       }
     }

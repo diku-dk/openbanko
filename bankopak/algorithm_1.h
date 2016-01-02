@@ -14,7 +14,7 @@ void a1_compress(FILE *out, FILE *in) {
   while (banko_reader_board(&reader, &board) == 0) {
     for (int row = 0; row < BOARD_ROWS; row++) {
       for (int col = 0; col < BOARD_COLS; col++) {
-        uint8_t cell = board.cells[row*BOARD_COLS+col];
+        uint8_t cell = board.cells[row][col];
         if (in_second_half) {
           if (cell != 0) {
             accum |= cell - col*10;
@@ -54,17 +54,17 @@ void a1_decompress(FILE *out, FILE *in) {
       for (int col = 0; col < BOARD_COLS; col++) {
         if (in_second_half) {
           if ((accum & 0xF) != 0) {
-            board.cells[row*BOARD_COLS+col] = (accum & 0xF) + col*10;
+            board.cells[row][col] = (accum & 0xF) + col*10;
           } else {
-            board.cells[row*BOARD_COLS+col] = 0;
+            board.cells[row][col] = 0;
           }
           in_second_half = 0;
         } else {
           accum = fgetc(in);
           if (((accum >> 4) & 0xF) != 0) {
-            board.cells[row*BOARD_COLS+col] = ((accum >> 4) & 0xF) + col*10;
+            board.cells[row][col] = ((accum >> 4) & 0xF) + col*10;
           } else {
-            board.cells[row*BOARD_COLS+col] = 0;
+            board.cells[row][col] = 0;
           }
           in_second_half = 1;
         }

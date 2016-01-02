@@ -11,10 +11,9 @@
 
 #define BOARD_ROWS 3
 #define BOARD_COLS 9
-#define BOARD_SIZE (BOARD_ROWS*BOARD_COLS)
 
 struct board {
-  uint8_t cells[BOARD_SIZE];
+  uint8_t cells[BOARD_ROWS][BOARD_COLS];
 };
 
 struct banko_writer {
@@ -64,7 +63,7 @@ static void banko_writer_board(struct banko_writer *writer, const struct board *
     fputs("[", writer->file);
 
     for (int col = 0; col < BOARD_COLS; col++) {
-      fprintf(writer->file, "%2d", board->cells[row*BOARD_COLS+col]);
+      fprintf(writer->file, "%2d", board->cells[row][col]);
       if (col != BOARD_COLS-1) {
         fputs(", ", writer->file);
       }
@@ -143,7 +142,7 @@ static int banko_reader_board(struct banko_reader *reader, struct board *board) 
       if (fscanf(reader->file, "%d", &x) != 1 || x < 0 || x > 90) {
         reader->error = 1;
       } else {
-        board->cells[row*BOARD_COLS+col] = x;
+        board->cells[row][col] = x;
       }
     }
 
