@@ -5,11 +5,8 @@
 
 #include "bankopladeformat.h"
 
-int main(int argc, char** argv) {
+int main() {
   struct board board;
-  for (int i = 0; i < BOARD_SIZE; i++) {
-    board.cells[i] = i;
-  }
 
   struct banko_writer writer;
   struct banko_reader reader;
