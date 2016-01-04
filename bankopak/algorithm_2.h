@@ -5,6 +5,7 @@
 #include <error.h>
 
 #include "bankopladeformat/bankopladeformat.h"
+#include "bitio.h"
 
 /* This means an index fits in 9 bits. */
 #define A2_TABLE_SIZE 512
@@ -37,53 +38,16 @@ int a2_find_table_index(uint8_t column[BOARD_ROWS]) {
   return -1;
 }
 
-int a2_write_bits_buffered = 0;
-unsigned char a2_write_bit_buffer = 0;
-
-void a2_flush_bit(FILE *out) {
-  if (a2_write_bits_buffered) {
-    a2_write_bit_buffer <<= 8 - a2_write_bits_buffered;
-    fputc(a2_write_bit_buffer, out);
-    a2_write_bits_buffered = 0;
-  }
-}
-
-void a2_write_bit(int c, FILE *out) {
-  a2_write_bit_buffer <<= 1;
-  a2_write_bit_buffer |= c;
-  if (++a2_write_bits_buffered == 8) {
-    a2_flush_bit(out);
-  }
-}
-
 void a2_write_9bit(unsigned int c, FILE *out) {
   for (int i = 8; i >= 0; i--) {
-    a2_write_bit((c>>i)&1, out);
-  }
-}
-
-int a2_read_bits_buffered = 0;
-unsigned char a2_read_bit_buffer = 0;
-
-int a2_read_bit(FILE *in) {
-  if (a2_read_bits_buffered) {
-    int c = (a2_read_bit_buffer >> (--a2_read_bits_buffered)) & 1;
-    return c;
-  } else {
-    int c = fgetc(in);
-    if (c == EOF) {
-      return EOF;
-    }
-    a2_read_bit_buffer = c;
-    a2_read_bits_buffered = 7;
-    return (a2_read_bit_buffer >> 7) & 1;
+    write_bit((c>>i)&1, out);
   }
 }
 
 unsigned int a2_read_9bit(FILE *in) {
   int res = 0;
   for (int i = 8; i >= 0; i--) {
-    int c = a2_read_bit(in);
+    int c = read_bit(in);
     if (c == EOF) {
       if (i == 8) {
         return EOF;
@@ -121,7 +85,7 @@ void a2_compress(FILE *out, FILE *in) {
     }
   }
 
-  a2_flush_bit(out);
+  flush_bit(out);
   banko_reader_close(&reader);
 }
 
