@@ -39,26 +39,11 @@ int a2_find_table_index(uint8_t column[BOARD_ROWS]) {
 }
 
 void a2_write_9bit(unsigned int c, FILE *out) {
-  for (int i = 8; i >= 0; i--) {
-    write_bit((c>>i)&1, out);
-  }
+  return write_bits(9, c, out);
 }
 
 unsigned int a2_read_9bit(FILE *in) {
-  int res = 0;
-  for (int i = 8; i >= 0; i--) {
-    int c = read_bit(in);
-    if (c == EOF) {
-      if (i == 8) {
-        return EOF;
-      } else {
-        c = 0;
-      }
-    }
-    res <<= 1;
-    res |= c;
-  }
-  return res;
+  return read_bits(9, in);
 }
 
 void a2_compress(FILE *out, FILE *in) {
