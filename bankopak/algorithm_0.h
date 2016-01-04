@@ -24,8 +24,10 @@ void a0_decompress(FILE *out, FILE *in) {
   struct banko_writer writer;
   banko_writer_open(&writer, out);
 
-  fread(board.cells, sizeof(board.cells[0]), BOARD_ROWS*BOARD_COLS, in);
-  banko_writer_board(&writer, &board);
+  while (fread(&board.cells, sizeof(board.cells[0][0]),
+               BOARD_ROWS*BOARD_COLS, in) == BOARD_ROWS*BOARD_COLS) {
+    banko_writer_board(&writer, &board);
+  }
 
   banko_writer_close(&writer);
 }
