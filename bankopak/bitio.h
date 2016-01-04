@@ -3,13 +3,13 @@
 
 /* Warning: these functions are not thread-safe. */
 
-static unsigned int read_bit(FILE *in);
+static int read_bit(FILE *in);
 static void write_bit(unsigned int c, FILE *out);
 static void flush_bit(FILE *out);
 /* You can only unget one bit. */
 static void unget_bit(unsigned int c);
-static unsigned int peek_bit(FILE *out);
-static unsigned int read_bits(int n, FILE *in);
+static int peek_bit(FILE *out);
+static int read_bits(int n, FILE *in);
 static void write_bits(int n, unsigned int c, FILE *in);
 
 static int write_bits_buffered = 0;
@@ -33,7 +33,7 @@ static void write_bit(unsigned int c, FILE *out) {
   }
 }
 
-static unsigned int read_bit(FILE *in) {
+static int read_bit(FILE *in) {
   if (read_bits_buffered) {
     int c = (read_bit_buffer >> (--read_bits_buffered)) & 1;
     return c;
@@ -52,7 +52,7 @@ static void unget_bit(unsigned int c) {
   read_bit_buffer |= c << read_bits_buffered++;
 }
 
-static unsigned int peek_bit(FILE *in) {
+static int peek_bit(FILE *in) {
   int c = read_bit(in);
   unget_bit(c);
   return c;
@@ -64,7 +64,7 @@ static void write_bits(int n, unsigned int c, FILE *out) {
   }
 }
 
-static unsigned int read_bits(int n, FILE *in) {
+static int read_bits(int n, FILE *in) {
   int res = 0;
   for (int i = n; i >= 0; i--) {
     int c = read_bit(in);
