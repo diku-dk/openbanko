@@ -36,6 +36,7 @@ struct banko_reader {
 static int banko_reader_open(struct banko_reader *reader, FILE *file);
 static int banko_reader_board(struct banko_reader *reader, struct board *board);
 static int banko_reader_close(struct banko_reader *reader);
+static void banko_reader_clear_error(struct banko_reader *reader);
 
 /*
  * All function definitions inlined and defined statically.
@@ -81,6 +82,10 @@ static void banko_writer_close(struct banko_writer *writer) {
 }
 
 static void skipspaces(struct banko_reader *reader) {
+  if (reader->error != 0) {
+    return;
+  }
+
   int c = fgetc(reader->file);
 
   if (isspace(c)) {
@@ -91,7 +96,12 @@ static void skipspaces(struct banko_reader *reader) {
 }
 
 static void expect_char(struct banko_reader *reader, char expects) {
+  if (reader->error != 0) {
+    return;
+  }
+
   char got = fgetc(reader->file);
+
   if (got == expects) {
     return;
   } else {
@@ -139,7 +149,7 @@ static int banko_reader_board(struct banko_reader *reader, struct board *board) 
 
       skipspaces(reader);
       int x = 0;
-      if (fscanf(reader->file, "%d", &x) != 1 || x < 0 || x > 90) {
+      if (reader->error != 0 || fscanf(reader->file, "%d", &x) != 1 || x < 0 || x > 90) {
         reader->error = 1;
       } else {
         board->cells[row][col] = x;
@@ -161,5 +171,10 @@ static int banko_reader_close(struct banko_reader *reader) {
   expect_char(reader, ']');
   return reader->error;
 }
+
+static void banko_reader_clear_error(struct banko_reader *reader) {
+  reader->error = 0;
+}
+
 
 #endif
