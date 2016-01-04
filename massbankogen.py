@@ -1,89 +1,83 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
-"""
-Lav en hel masse bankoplader!
-"""
-
-import itertools
 import random
 import sys
-from sys import stdout
 
-# Slam begynder her.
 
-def generate_bankoplade():
-    poss = []
-    yxs = {}
-    for y in range(3):
-        yxs[y] = []
+def shufrange(n):
+    '''Same as range, but in shuffled order.'''
+    ns = list(range(n))
+    random.shuffle(ns)
+    return iter(ns)
+
+def gen_banko():
+    # Generate random positions in a way that ensures that each row has 5 marked
+    # positions.
+    rows = []
+    column_sizes = [0 for i in range(9)]
+    for i in range(3):
+        bs = [False for j in range(9)]
+        for p in list(shufrange(9))[:5]:
+            bs[p] = True
+            column_sizes[p] += 1
+        rows.append(bs)
+    
+    # Fix the positions if necessary, i.e. if a column has zero marked
+    # positions, then mark one of the column's positions by unmarking a position
+    # on the same row in a different column with multiple marked positions.
+    # Make sure to throw in randomness everywhere.
+    for i in shufrange(9):
+        if column_sizes[i] == 0:
+            for j in shufrange(9):
+                if column_sizes[j] > 1:
+                    column_sizes[j] -= 1
+                    for k in shufrange(3):
+                        if rows[k][j]:
+                            rows[k][j] = False
+                            rows[k][i] = True
+                            break
+                    column_sizes[i] = 1
+                    break
+
+    # Generate random numbers and Fill them into the marked positions.
     for x in range(9):
-        ys = []
-        for i in range(3):
-            if len(yxs[i]) < 5:
-                ys.append(i)
-        random.shuffle(ys)
-        y = ys[0]
-        poss.append((x, y))
-        yxs[y].append(x)
-    for y in range(3):
-        xs = range(9)
-        ts = yxs[y]
-        for t in ts:
-            xs.remove(t)
-        random.shuffle(xs)
-        xs = xs[:5 - len(ts)]
-        for x in xs:
-            poss.append((x, y))
-
-    banko = [None for _ in range(9)]
-    xs = range(9)
-    random.shuffle(xs)
-    for x in xs:
-        col = []
-        banko[x] = col
-        nns = 0
-        for y in range(3):
-            if (x, y) in poss:
-                col.append(True)
-                nns += 1
-            else:
-                col.append(None)
-        ns = range(9 if x < 8 else 10)
-        random.shuffle(ns)
-        ns = ns[:nns]
-        ns.sort()
-        j = 0
-        for i in range(3):
-            if col[i]:
-                col[i] = ns[j] + 1 + 10 * x
-                j += 1
-    return banko
-
-def print_n_plader(n):
-    stdout.write('[\n')
-    for i in range(n):
-        plade = generate_bankoplade()
-        stdout.write('[')
-        for row in range(3):
-            stdout.write('[')
-            for col in range(9):
-                num = plade[col][row]
-                if num:
-                    stdout.write(str(num))
-                else:
-                    stdout.write('00')
-                if col != 8:
-                    stdout.write(', ')
-            if row != 2:
-                stdout.write('],\n')
-            else:
-                stdout.write(']\n')
-        if i != n-1:
-            stdout.write('],\n')
+        if x == 0:
+            min_n = 1
+            max_n = 9
+        elif x == 8:
+            min_n = 80
+            max_n = 90
         else:
-            stdout.write(']\n')
-    stdout.write(']\n')
+            min_n = x * 10
+            max_n = min_n + 9
+        n_nums = column_sizes[x]
+        ns = list(range(min_n, max_n + 1))
+        random.shuffle(ns)
+        ns = ns[:3]
+        ns.sort()
+        i = 0
+        for y in range(3):
+            if rows[y][x]:
+                rows[y][x] = ns[i]
+                i += 1
+    return rows
+
+def format_banko(rows):
+    return '[{}]'.format('\n '.join('[' + ', '.join('{:02d}'.format(num)
+                                                    for num in row) + ']'
+                                    for row in rows))
+
+def print_bankos(n):
+    print('[')
+    for i in range(n - 1):
+        print(format_banko(gen_banko()) + ',')
+    print(format_banko(gen_banko()))
+    print(']')
 
 if __name__ == '__main__':
-    print_n_plader(int(sys.argv[1]))
+    try:
+        n = int(sys.argv[1])
+    except Exception:
+        n = 1
+
+    print_bankos(n)
