@@ -7,6 +7,7 @@
 #include "algorithm_1.h"
 #include "algorithm_2.h"
 #include "algorithm_3.h"
+#include "algorithm_4.h"
 
 typedef void (*compressor)(FILE*, FILE*);
 typedef void (*decompressor)(FILE*, FILE*);
@@ -20,7 +21,8 @@ struct algorithm algorithms[] = {
   {a0_compress, a0_decompress},
   {a1_compress, a1_decompress},
   {a2_compress, a2_decompress},
-  {a3_compress, a3_decompress}
+  {a3_compress, a3_decompress},
+  {a4_compress, a4_decompress}
 };
 
 static const int num_algorithms =
