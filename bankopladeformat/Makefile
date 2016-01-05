@@ -1,7 +1,7 @@
 CC=cc
 CFLAGS=-O2 -std=c99 -Wall -Wextra -pedantic -Wno-unused-function
 
-all: bankopladeformat bankocmp
+all: bankopladeformat bankocmp bankojoin
 
 bankopladeformat: bankopladeformat.c bankopladeformat.h
 	$(CC) $(CFLAGS) -o $@ $<
@@ -9,5 +9,11 @@ bankopladeformat: bankopladeformat.c bankopladeformat.h
 bankocmp: bankocmp.c bankopladeformat.h
 	$(CC) $(CFLAGS) -o $@ $<
 
+bankojoin: bankojoin.c bankopladeformat.h
+	$(CC) $(CFLAGS) -o $@ $<
+
+bankosplit: bankosplit.c bankopladeformat.h
+	$(CC) $(CFLAGS) -o $@ $<
+
 clean:
-	rm -f bankopladeformat bankocmp
+	rm -f bankopladeformat bankocmp bankojoin
