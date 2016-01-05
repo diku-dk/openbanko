@@ -63,7 +63,7 @@ def gen_banko():
     return rows
 
 def format_banko(rows):
-    return '[{}]'.format('\n '.join('[' + ', '.join('{:02d}'.format(num)
+    return '[{}]'.format(',\n '.join('[' + ', '.join('{:02d}'.format(num)
                                                     for num in row) + ']'
                                     for row in rows))
 
