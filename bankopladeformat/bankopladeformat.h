@@ -105,6 +105,7 @@ static void expect_char(struct banko_reader *reader, char expects) {
   if (got == expects) {
     return;
   } else {
+    ungetc(got, reader->file);
     reader->error = 1;
   }
 }
