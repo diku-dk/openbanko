@@ -130,18 +130,11 @@ static void a6_make_row_values(a6_row_values_t *dest_row_values,
                                const a6_board_values_t src_board_values) {
   for (int row = 0; row < BOARD_ROWS; row++) {
     uint64_t val_cur = 0;
-    /* fprintf(stderr, "en %d %hhu %hhu %hhu %hhu %hhu\n", row, */
-    /*         src_board_values.cells[row][0], */
-    /*         src_board_values.cells[row][1], */
-    /*         src_board_values.cells[row][2], */
-    /*         src_board_values.cells[row][3], */
-    /*         src_board_values.cells[row][4]); */
     val_cur += src_board_values.cells[row][4];
     val_cur += src_board_values.cells[row][3] * 11;
     val_cur += src_board_values.cells[row][2] * 11 * 10;
     val_cur += src_board_values.cells[row][1] * 11 * 10 * 10;
     val_cur += src_board_values.cells[row][0] * 11 * 10 * 10 * 10;
-    /* fprintf(stderr, "en %lu\n", val_cur); */
     dest_row_values->cells[row] = val_cur;
   }
 }
@@ -150,7 +143,6 @@ static void a6_make_board_values(a6_board_values_t *dest_board_values,
                                  const a6_row_values_t src_row_values) {
   for (int row = 0; row < BOARD_ROWS; row++) {
     uint64_t orig = src_row_values.cells[row];
-    /* fprintf(stderr, "de %lu\n", orig); */
     dest_board_values->cells[row][4] = orig % 11;
     orig /= 11;
     dest_board_values->cells[row][3] = orig % 10;
@@ -160,12 +152,6 @@ static void a6_make_board_values(a6_board_values_t *dest_board_values,
     dest_board_values->cells[row][1] = orig % 10;
     orig /= 10;
     dest_board_values->cells[row][0] = orig;
-    /* fprintf(stderr, "de %d %hhu %hhu %hhu %hhu %hhu\n", row, */
-    /*         dest_board_values->cells[row][0], */
-    /*         dest_board_values->cells[row][1], */
-    /*         dest_board_values->cells[row][2], */
-    /*         dest_board_values->cells[row][3], */
-    /*         dest_board_values->cells[row][4]); */
   }
 }
 
@@ -173,20 +159,16 @@ static uint64_t a6_arithmetic_encode(const a6_row_values_t src_row_values) {
   uint64_t n = 0;
   uint64_t b = 1;
   for (int row = 0; row < BOARD_ROWS; row++) {
-    /* fprintf(stderr, "en arit row %lu\n", src_row_values.cells[row]); */
     n += src_row_values.cells[row] * b;
     b *= A6_ARITHMETIC_CODING_BASE;
   }
-  /* fprintf(stderr, "en arit %lu\n", n); */
   return n;
 }
 
 static void a6_arithmetic_decode(a6_row_values_t *dest_row_values,
                                  uint64_t src_n) {
-  /* fprintf(stderr, "de arit %lu\n", src_n); */
   for (int row = 0; row < BOARD_ROWS; row++) {
     dest_row_values->cells[row] = src_n % A6_ARITHMETIC_CODING_BASE;
-    /* fprintf(stderr, "de arit row %lu\n", dest_row_values->cells[row]); */
     src_n /= A6_ARITHMETIC_CODING_BASE;
   }
 }
