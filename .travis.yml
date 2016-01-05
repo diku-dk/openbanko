@@ -1,0 +1,11 @@
+language: c
+
+# We use a container-based worker.
+sudo: false
+
+install:
+  - (cd bankopladeformat; make)
+  - (cd bankopak; make)
+
+script:
+  - (cd bankopak; make test)

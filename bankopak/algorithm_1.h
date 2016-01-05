@@ -2,40 +2,35 @@
 #define ALGORITHM_1_H
 
 #include "bankopladeformat/bankopladeformat.h"
+#include "bitio.h"
+
+void a1_write_4bit(unsigned int c, FILE *out) {
+  return write_bits(4, c, out);
+}
+
+unsigned int a1_read_4bit(FILE *in) {
+  return read_bits(4, in);
+}
 
 void a1_compress(FILE *out, FILE *in) {
   struct board board;
   struct banko_reader reader;
   banko_reader_open(&reader, in);
 
-  int in_second_half = 0;
-  unsigned char accum = 0;
-
   while (banko_reader_board(&reader, &board) == 0) {
     for (int row = 0; row < BOARD_ROWS; row++) {
       for (int col = 0; col < BOARD_COLS; col++) {
         uint8_t cell = board.cells[row][col];
-        if (in_second_half) {
-          if (cell != 0) {
-            accum |= cell + 1 - col*10;
-          }
-          fputc(accum, out);
-          accum = 0;
-          in_second_half = 0;
+        if (cell == 0) {
+          a1_write_4bit(0, out);
         } else {
-          if (cell != 0) {
-            accum = (cell + 1 - col*10) << 4;
-          }
-          in_second_half = 1;
+          a1_write_4bit(cell + 1 - col*10, out);
         }
       }
     }
   }
 
-  if (in_second_half) {
-    fputc(accum, out);
-    in_second_half = 0;
-  }
+  flush_bit(out);
 
   banko_reader_close(&reader);
 }
@@ -45,28 +40,16 @@ void a1_decompress(FILE *out, FILE *in) {
   struct banko_writer writer;
   banko_writer_open(&writer, out);
 
-  int in_second_half = 0;
   int c;
-  unsigned char accum;
 
   while (1) {
     for (int row = 0; row < BOARD_ROWS; row++) {
       for (int col = 0; col < BOARD_COLS; col++) {
-        if (in_second_half) {
-          if ((accum & 0xF) != 0) {
-            board.cells[row][col] = (accum & 0xF) - 1 + col*10;
-          } else {
-            board.cells[row][col] = 0;
-          }
-          in_second_half = 0;
+        uint8_t cell = a1_read_4bit(in);
+        if (cell != 0) {
+          board.cells[row][col] = cell - 1 + col*10;
         } else {
-          accum = fgetc(in);
-          if (((accum >> 4) & 0xF) != 0) {
-            board.cells[row][col] = ((accum >> 4) & 0xF) - 1 + col*10;
-          } else {
-            board.cells[row][col] = 0;
-          }
-          in_second_half = 1;
+          board.cells[row][col] = 0;
         }
       }
     }
