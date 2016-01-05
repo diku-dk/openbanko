@@ -121,8 +121,8 @@ static int banko_reader_open(struct banko_reader *reader, FILE *file) {
 }
 
 static int banko_reader_board(struct banko_reader *reader, struct board *board) {
+  skipspaces(reader);
   if (reader->first) {
-    skipspaces(reader);
     reader->first = 0;
   } else {
     expect_char(reader, ',');
