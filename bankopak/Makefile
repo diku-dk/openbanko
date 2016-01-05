@@ -11,7 +11,7 @@ bankopak: bankopak.c $(ALGORITHMS) bitio.h
 clean:
 	rm bankopak
 
-TESTFILE=../boards/3_boards.bankopladeformat
+TESTFILE=../boards/1000_boards.bankopladeformat
 
 # MAKEFILES SUCK
 test_bankopak_%: bankopak
