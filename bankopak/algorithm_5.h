@@ -82,12 +82,84 @@ const char* huffman_table_notfirst[] =
     "111111",
   };
 
+const char* huffman_table_row2[] =
+  {
+    "0",
+    "1101",
+    "100",
+    "101",
+    "1100",
+    "11110",
+    "11100",
+    "11101",
+    "1111100",
+    "1111101",
+    "1111110",
+    "1111111",
+  };
+
+const char* huffman_table_row2_notfirst[] =
+  {
+    "0",
+    "11100",
+    "101",
+    "100",
+    "1100",
+    "1101",
+    "11101",
+    "111100",
+    "111101",
+    "111110",
+    "111111",
+  };
+
+const char* huffman_table_row3[] =
+  {
+    "0",
+    "11110",
+    "100",
+    "101",
+    "1100",
+    "1101",
+    "11100",
+    "11101",
+    "1111100",
+    "1111101",
+    "1111110",
+    "1111111",
+  };
+
+const char* huffman_table_row3_notfirst[] =
+  {
+    "0",
+    "11100",
+    "101",
+    "100",
+    "1100",
+    "1101",
+    "11101",
+    "111100",
+    "111101",
+    "111110",
+    "111111",
+  };
+
 unsigned int a5_read_next(int row, int col, int prev, int hasprev, FILE *in) {
   row = row;
   col = col;
   prev = prev;
   if (hasprev) {
-    return a5_huffman_decode(in, 12, huffman_table_notfirst);
+    if (row == 2) {
+      return a5_huffman_decode(in, 11, huffman_table_row2_notfirst);
+    } else if (row == 3) {
+      return a5_huffman_decode(in, 11, huffman_table_row3_notfirst);
+    } else {
+      return a5_huffman_decode(in, 11, huffman_table_notfirst);
+    }
+  } else if (row == 2) {
+    return a5_huffman_decode(in, 12, huffman_table_row2);
+  } else if (row == 3) {
+    return a5_huffman_decode(in, 12, huffman_table_row3);
   } else {
     return a5_huffman_decode(in, 12, huffman_table_default);
   }
@@ -98,7 +170,17 @@ void a5_write_next(int row, int col, int prev, int hasprev, unsigned int c, FILE
   col = col;
   prev = prev;
   if (hasprev) {
-    return a5_huffman_encode(c, out, huffman_table_notfirst);
+    if (row == 2) {
+      return a5_huffman_encode(c, out, huffman_table_row2_notfirst);
+    } else if (row == 3) {
+      return a5_huffman_encode(c, out, huffman_table_row3_notfirst);
+    } else {
+      return a5_huffman_encode(c, out, huffman_table_notfirst);
+    }
+  } else if (row == 2) {
+    return a5_huffman_encode(c, out, huffman_table_row2);
+  } else if (row == 3) {
+    return a5_huffman_encode(c, out, huffman_table_row3);
   } else {
     return a5_huffman_encode(c, out, huffman_table_default);
   }
