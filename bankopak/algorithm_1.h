@@ -17,14 +17,14 @@ void a1_compress(FILE *out, FILE *in) {
         uint8_t cell = board.cells[row][col];
         if (in_second_half) {
           if (cell != 0) {
-            accum |= cell - col*10;
+            accum |= cell + 1 - col*10;
           }
           fputc(accum, out);
           accum = 0;
           in_second_half = 0;
         } else {
           if (cell != 0) {
-            accum = (cell - col*10) << 4;
+            accum = (cell + 1 - col*10) << 4;
           }
           in_second_half = 1;
         }
@@ -54,7 +54,7 @@ void a1_decompress(FILE *out, FILE *in) {
       for (int col = 0; col < BOARD_COLS; col++) {
         if (in_second_half) {
           if ((accum & 0xF) != 0) {
-            board.cells[row][col] = (accum & 0xF) + col*10;
+            board.cells[row][col] = (accum & 0xF) - 1 + col*10;
           } else {
             board.cells[row][col] = 0;
           }
@@ -62,7 +62,7 @@ void a1_decompress(FILE *out, FILE *in) {
         } else {
           accum = fgetc(in);
           if (((accum >> 4) & 0xF) != 0) {
-            board.cells[row][col] = ((accum >> 4) & 0xF) + col*10;
+            board.cells[row][col] = ((accum >> 4) & 0xF) - 1 + col*10;
           } else {
             board.cells[row][col] = 0;
           }

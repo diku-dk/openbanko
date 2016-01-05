@@ -16,9 +16,9 @@ void a2_build_table() {
   int index = 0;
 
   /* Enumerate all possible columns. */
-  for (int x1 = 0; x1 < 11; x1++) {
-    for (int x2 = 0; x2 < 11-x1; x2++) {
-      for (int x3 = 0; x3 < 11-x1-x2; x3++) {
+  for (int x1 = 0; x1 < 12; x1++) {
+    for (int x2 = 0; x2 < 12-x1; x2++) {
+      for (int x3 = 0; x3 < 12-x1-x2; x3++) {
         a2_column_table[index][0] = x1;
         a2_column_table[index][1] = x2;
         a2_column_table[index][2] = x3;
@@ -62,8 +62,8 @@ void a2_compress(FILE *out, FILE *in) {
         if (cell == 0) {
           column[row] = 0;
         } else {
-          column[row] = cell - prev;
-          prev = cell;
+          column[row] = cell - prev + 1;
+          prev = cell + 1;
         }
       }
       a2_write_9bit(a2_find_table_index(column), out);
@@ -94,7 +94,8 @@ void a2_decompress(FILE *out, FILE *in) {
         if (cell == 0) {
           board.cells[row][col] = 0;
         } else {
-          prev = board.cells[row][col] = cell + prev;
+          prev = board.cells[row][col] = cell + prev - 1;
+          prev += 1;
         }
       }
     }

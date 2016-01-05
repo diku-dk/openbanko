@@ -45,7 +45,11 @@ unsigned int a5_read_next(FILE *in) {
             if (read_bit(in) == 0) {
               return 9;
             } else {
-              return 10;
+              if (read_bit(in) == 0) {
+                return 10;
+              } else {
+                return 11;
+              }
             }
           }
         }
@@ -87,7 +91,10 @@ void a5_write_next(unsigned int c, FILE *out) {
     write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(0, out);
     return;
   case 10:
-    write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out);
+    write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(0, out);
+    return;
+  case 11:
+    write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out); write_bit(1, out);
     return;
   }
 }
@@ -105,7 +112,7 @@ void a5_compress(FILE *out, FILE *in) {
         if (cell == 0) {
           a5_write_next(0, out);
         } else {
-          a5_write_next(cell - prev, out);
+          a5_write_next(cell - prev + 1, out);
           prev = cell;
         }
       }
@@ -134,7 +141,7 @@ void a5_decompress(FILE *out, FILE *in) {
         if (cell == 0) {
           board.cells[row][col] = cell;
         } else {
-          prev = board.cells[row][col] = prev + cell;
+          prev = board.cells[row][col] = prev + cell - 1;
         }
       }
     }
