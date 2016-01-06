@@ -2,9 +2,8 @@ language: c
 
 before_install:
   - sudo add-apt-repository --yes ppa:hansjorg/rust
-  - sudo add-apt-repository --yes ppa:cmrx64/cargo
   - sudo apt-get update -qq
-  - sudo apt-get install -qq rust-nightly cargo
+  - sudo apt-get install -qq rust-nightly cargo-nightly
 
 install:
   - (cd bankopladeformat; make)
