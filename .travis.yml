@@ -1,7 +1,11 @@
-language: rust
+language: c
 
 before_install:
-  - sudo apt-get install build-essentials
+  - git clone --recursive https://github.com/brson/multirust && cd multirust
+  - git submodule update --init
+  - ./build.sh && sudo ./install.sh
+  - multirust override 1.5.0
+#  - sudo apt-get install build-essentials
 
 install:
   - (cd bankopladeformat; make)
