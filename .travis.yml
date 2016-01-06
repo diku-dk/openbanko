@@ -1,7 +1,7 @@
 language: c
 
 # We use a container-based worker.
-sudo: false
+# sudo: false
 
 before_install:
   - sudo apt-get update
