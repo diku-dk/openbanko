@@ -1,9 +1,7 @@
-language: c
+language: rust
 
 before_install:
-  - sudo add-apt-repository --yes ppa:hansjorg/rust
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq rust-nightly cargo-nightly
+  - sudo apt-get install build-essentials
 
 install:
   - (cd bankopladeformat; make)
