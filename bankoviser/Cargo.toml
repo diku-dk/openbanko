@@ -1,0 +1,7 @@
+[package]
+name = "bankoviser"
+version = "1.0.0"
+authors = ["Svip <svip@flagland.org>"]
+
+[dependencies]
+rustbox = "*"
