@@ -5,6 +5,8 @@ before_install:
   - git submodule update --init
   - ./build.sh && sudo ./install.sh
   - multirust override 1.5.0
+  - rustc --version
+  - cd ..
 #  - sudo apt-get install build-essentials
 
 install:
