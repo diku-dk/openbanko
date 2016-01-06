@@ -3,9 +3,14 @@ language: c
 # We use a container-based worker.
 sudo: false
 
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install rust
+
 install:
   - (cd bankopladeformat; make)
   - (cd bankopak; make)
+  - (cd bankoviser; cargo build)
 
 script:
   - (cd bankopak; make test)
