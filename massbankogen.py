@@ -63,16 +63,13 @@ def gen_banko():
     return rows
 
 def format_banko(rows):
-    return '[{}]'.format(',\n '.join('[' + ', '.join('{:02d}'.format(num)
-                                                    for num in row) + ']'
-                                    for row in rows))
+    return '\n'.join(' '.join('{:02d}'.format(num) for num in row)
+                       for row in rows) + '\n'
 
 def print_bankos(n):
-    print('[')
     for i in range(n - 1):
-        print(format_banko(gen_banko()) + ',')
+        print(format_banko(gen_banko()))
     print(format_banko(gen_banko()))
-    print(']')
 
 if __name__ == '__main__':
     try:
