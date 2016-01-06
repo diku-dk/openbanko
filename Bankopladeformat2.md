@@ -8,8 +8,7 @@ BNF-notation
     <bankopladeliste> ::= <bankoplade> <linjeskift> <bankopladeliste>
                         | <bankoplade> <linjeskift>
          <bankoplade> ::= <bankopladelinje> <bankopladelinje> <bankopladelinje>
-    <bankopladelinje> ::= <felt> " " <felt> " " <felt> " " <felt> " " <felt> 
-" " <felt> " " <felt> " " <felt> " " <felt> <linjeskift>
+    <bankopladelinje> ::= <felt> " " <felt> " " <felt> " " <felt> " " <felt> " " <felt> " " <felt> " " <felt> " " <felt> <linjeskift>
          <linjeskift> ::= "\n"
                <felt> ::= <etciferheltal> <etciferheltal>
       <etciferheltal> ::= 0-9
