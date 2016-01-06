@@ -45,54 +45,24 @@ static void banko_reader_clear_error(struct banko_reader *reader);
 static void banko_writer_open(struct banko_writer *writer, FILE *file) {
   writer->file = file;
   writer->first = 1;
-
-  fputs("[\n", writer->file);
 }
 
 static void banko_writer_board(struct banko_writer *writer, const struct board *board) {
-  if (!writer->first) {
-    fputs(",\n", writer->file);
-  } else {
-    writer->first = 0;
-  }
-
-  fputs("[", writer->file);
   for (int row = 0; row < BOARD_ROWS; row++) {
-    if (row > 0) {
-      fputs(" ", writer->file);
-    }
-    fputs("[", writer->file);
-
     for (int col = 0; col < BOARD_COLS; col++) {
-      fprintf(writer->file, "%2d", board->cells[row][col]);
+      fprintf(writer->file, "%.2d", board->cells[row][col]);
       if (col != BOARD_COLS-1) {
-        fputs(", ", writer->file);
+        fputc(' ', writer->file);
       }
     }
-    if (row != BOARD_ROWS-1) {
-      fputs("],\n", writer->file);
-    } else {
-      fputs("]]", writer->file);
-    }
+    fputc('\n', writer->file);
   }
+  fputc('\n', writer->file);
 }
 
 static void banko_writer_close(struct banko_writer *writer) {
-  fputs("\n]\n", writer->file);
-}
-
-static void skipspaces(struct banko_reader *reader) {
-  if (reader->error != 0) {
-    return;
-  }
-
-  int c = fgetc(reader->file);
-
-  if (isspace(c)) {
-    skipspaces(reader);
-  } else if (c != EOF) {
-    ungetc(c, reader->file);
-  }
+  writer = writer;
+  return;
 }
 
 static void expect_char(struct banko_reader *reader, char expects) {
@@ -110,66 +80,44 @@ static void expect_char(struct banko_reader *reader, char expects) {
   }
 }
 
+static int expect_digits(struct banko_reader *reader) {
+  if (reader->error != 0) {
+    return 0;
+  }
+
+  int x;
+
+  if (fscanf(reader->file, "%d", &x) != 1 || x < 0 || x > 90) {
+    reader->error = 1;
+  }
+  return x;
+}
+
 static int banko_reader_open(struct banko_reader *reader, FILE *file) {
   reader->file = file;
   reader->error = 0;
   reader->first = 1;
 
-  skipspaces(reader);
-  expect_char(reader, '[');
-
   return reader->error;
 }
 
 static int banko_reader_board(struct banko_reader *reader, struct board *board) {
-  skipspaces(reader);
-  if (reader->first) {
-    reader->first = 0;
-  } else {
-    expect_char(reader, ',');
-  }
-
-  skipspaces(reader);
-  expect_char(reader, '[');
-
   /* Read row-by-row. */
   for (int row = 0; row < BOARD_ROWS; row++) {
-    if (row > 0) {
-      skipspaces(reader);
-      expect_char(reader, ',');
-    }
-
-    skipspaces(reader);
-    expect_char(reader, '[');
-
     for (int col = 0; col < BOARD_COLS; col++) {
       if (col > 0) {
-        skipspaces(reader);
-        expect_char(reader, ',');
+        expect_char(reader, ' ');
       }
-
-      skipspaces(reader);
-      int x = 0;
-      if (reader->error != 0 || fscanf(reader->file, "%d", &x) != 1 || x < 0 || x > 90) {
-        reader->error = 1;
-      } else {
-        board->cells[row][col] = x;
-      }
+      board->cells[row][col] = expect_digits(reader);
     }
-
-    skipspaces(reader);
-    expect_char(reader, ']');
+    expect_char(reader, '\n');
   }
-
-  skipspaces(reader);
-  expect_char(reader, ']');
+  expect_char(reader, '\n');
 
   return reader->error;
 }
 
 static int banko_reader_close(struct banko_reader *reader) {
-  skipspaces(reader);
-  expect_char(reader, ']');
   return reader->error;
 }
 
