@@ -1,11 +1,11 @@
 language: c
 
-# We use a container-based worker.
-# sudo: false
-
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install rustc cargo
+  - sudo add-apt-repository --yes ppa:hansjorg/rust
+  - sudo add-apt-repository --yes ppa:cmrx64/cargo
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install -qq rust-nightly cargo
 
 install:
   - (cd bankopladeformat; make)
