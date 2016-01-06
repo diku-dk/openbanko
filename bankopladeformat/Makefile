@@ -9,11 +9,5 @@ bankopladeformat: bankopladeformat.c bankopladeformat.h
 bankocmp: bankocmp.c bankopladeformat.h
 	$(CC) $(CFLAGS) -o $@ $<
 
-bankojoin: bankojoin.c bankopladeformat.h
-	$(CC) $(CFLAGS) -o $@ $<
-
-bankosplit: bankosplit.c bankopladeformat.h
-	$(CC) $(CFLAGS) -o $@ $<
-
 clean:
 	rm -f bankopladeformat bankocmp bankojoin
