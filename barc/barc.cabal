@@ -1,0 +1,59 @@
+Name:                barc
+Version:             0.1
+Synopsis:            An optimising compiler for checking the validity of boards in e.g. banko.
+description:
+
+        BARC (BAnko Rule Checker) is a board rule checker that can be used to
+        check the validity of boards in the game banko as well as closely
+        related games.  It is part of the Big Banko suite.
+
+Homepage:            https://github.com/Athas/banko
+Category:            Language
+License:             BSD3
+License-file:        ../LICENSE
+Build-type:          Simple
+Maintainer:          ngws@metanohi.name
+
+-- Constraint on the version of Cabal needed to build this package.
+Cabal-version:       >=1.10
+
+source-repository head
+  type:     git
+  location: git@github.com:Athas/banko.git
+
+Library
+  -- Packages needed in order to build this package.
+  Build-depends: base >= 4 && < 5,
+                 containers >= 0.5,
+                 safe >= 0.2,
+                 parsec >= 3.0.0,
+                 mtl >= 2.2.1
+
+  Exposed-modules: Barc.Runner
+                   Barc.Parser
+                   Barc.ExpOuter
+                   Barc.Simplifier
+                   Barc.ExpInner
+                   Barc.Unroller
+                   Barc.ExpUnrolled
+                   Barc.CodeGen
+                   Barc.FutharkGen
+
+  Default-Language:   Haskell2010
+
+  Ghc-Options:        -Wall -O3
+
+Executable barc
+  Main-is: barc.hs
+
+  -- Packages needed in order to build this package.
+  Build-depends: barc,
+                 base >= 4 && < 5,
+                 containers >= 0.5,
+                 safe >= 0.2,
+                 parsec >= 3.0.0,
+                 mtl >= 2.2.1
+
+  Default-Language:   Haskell2010
+
+  Ghc-Options:        -Wall -O3
