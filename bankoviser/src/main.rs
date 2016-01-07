@@ -12,7 +12,7 @@ use rustbox::Key;
 static BANKOCOLS: usize = 9;
 static BANKOROWS: usize = 3;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum Mode {
 	Normal,
 	Moving,
@@ -76,8 +76,77 @@ impl Video {
 		self.rustbox.present();
 	}
 	
+	fn draw_previous_plade(&self, plade: [[u16; 9]; 3]) {
+		let line = "+----+----+----+----+----+----+----+----+----+";
+		
+		let endx = self.rustbox.width()/2 - line.len()/2 - 5;
+		let y = 6;
+		
+		let mut col = BANKOCOLS - 1;
+		
+		for rcol in 0..BANKOCOLS-1 {
+			if endx < rcol*5 {
+				break;
+			}
+			let colx = endx - rcol*5;
+			for row in 0..plade.len() {
+				let ff = plade[row][col];
+				let text = if ff == 0 {
+					"|    ".to_string()
+				} else if ff < 10 {
+					format!("|  {} ", ff)
+				} else {
+					format!("| {}", ff)
+				};
+				self.rustbox.print(colx, y + row*4, rustbox::RB_NORMAL, Color::White, Color::Default, "+----");
+				self.rustbox.print(colx, y + row*4 + 1, rustbox::RB_NORMAL, Color::White, Color::Default, "|    ");
+				self.rustbox.print(colx, y + row*4 + 2, rustbox::RB_NORMAL, Color::White, Color::Default, &text);
+				self.rustbox.print(colx, y + row*4 + 3, rustbox::RB_NORMAL, Color::White, Color::Default, "|    ");
+			}
+			self.rustbox.print(colx, y + (plade.len()-1)*4 + 4, rustbox::RB_NORMAL, Color::White, Color::Default, "+----");
+			col -= 1;
+		}
+		
+		self.rustbox.present();
+	}
+	
+	fn draw_next_plade(&self, plade: [[u16; 9]; 3]) {
+		let line = "+----+----+----+----+----+----+----+----+----+";
+		
+		let x = self.rustbox.width()/2 + line.len()/2;
+		let y = 6;
+		
+		for col in 0..BANKOCOLS-1 {
+			if x + col*5 > self.rustbox.width() {
+				break;
+			}
+			let colx = x + col*5;
+			for row in 0..plade.len() {
+				let ff = plade[row][col];
+				let text = if ff == 0 {
+					"    |".to_string()
+				} else if ff < 10 {
+					format!("  {} |", ff)
+				} else {
+					format!(" {} |", ff)
+				};
+				self.rustbox.print(colx, y + row*4, rustbox::RB_NORMAL, Color::White, Color::Default, "----+");
+				self.rustbox.print(colx, y + row*4 + 1, rustbox::RB_NORMAL, Color::White, Color::Default, "    |");
+				self.rustbox.print(colx, y + row*4 + 2, rustbox::RB_NORMAL, Color::White, Color::Default, &text);
+				self.rustbox.print(colx, y + row*4 + 3, rustbox::RB_NORMAL, Color::White, Color::Default, "    |");
+			}
+			self.rustbox.print(colx, y + (plade.len()-1)*4 + 4, rustbox::RB_NORMAL, Color::White, Color::Default, "----+");
+		}
+		
+		self.rustbox.present();
+	}
+	
 	fn draw_plade(&self, n: usize, total: usize,
 			      plade: [[u16; 9]; 3]) {
+		// clean up!
+		for y in 0..BANKOROWS*4 + 1 {
+			self.rustbox.print(1, 6+y, rustbox::RB_NORMAL, Color::Default, Color::Default, &(0..self.rustbox.width()).map(|_| " ").collect::<String>());
+		}
 		let toptext = if n == 0 {
 			format!("  {}/{} >", n+1, total)
 		} else if n == total - 1 {
@@ -226,10 +295,17 @@ fn main() {
 	
 	'main: loop {
 		v.draw_plade(current, plader.len(), plader[current]);
-		if till_clear > 0 {
+		if current > 0 && mode == Mode::Moving {
+			v.draw_previous_plade(plader[current-1]);
+		}
+		if current + 1 < plader.len() && mode == Mode::Moving {
+			v.draw_next_plade(plader[current+1]);
+		}
+		if till_clear > 1 {
 			till_clear -= 1;
-		} else {
+		} else if till_clear == 1 {
 			v.clear_status();
+			till_clear -= 1;
 		}
 		
 		match v.rustbox.poll_event(false) {
