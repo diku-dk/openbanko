@@ -12,7 +12,7 @@ use rustbox::Key;
 static BANKOCOLS: usize = 9;
 static BANKOROWS: usize = 3;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum Mode {
 	Normal,
 	Moving,
@@ -21,10 +21,11 @@ enum Mode {
 struct Video {
 	rustbox: RustBox,
 	mode: Mode,
+	bigskip: usize,
 }
 
 impl Video {
-	fn init() -> Video {
+	fn init(bigskip: usize) -> Video {
 		let rustbox = match RustBox::init(Default::default()) {
 			Ok(val) => val,
 			Err(e) => panic!("{}", e),
@@ -33,6 +34,7 @@ impl Video {
 		let v = Video {
 			rustbox: rustbox,
 			mode: Mode::Normal,
+			bigskip: bigskip,
 		};
 		
 		v.draw_top();
@@ -42,7 +44,8 @@ impl Video {
 		
 	fn draw_top(&self) {
 		let text = "L: Luk  G: Gem  F: Flyttetilstand";
-		let x = self.rustbox.width()/2 - text.len()/2;
+		let mid = self.rustbox.width()/2;
+		let x = mid - text.len()/2;
 		
 		self.rustbox.print(x, 2, rustbox::RB_BOLD, Color::Default, Color::Default, "L");
 		self.rustbox.print(x+1, 2, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Luk");
@@ -51,8 +54,8 @@ impl Video {
 		self.rustbox.print(x+16, 2, rustbox::RB_BOLD, Color::Default, Color::Default, "F");
 		self.rustbox.print(x+17, 2, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Flyttetilstand");
 		
-		let text2 = "Venstre/Højre: Flyt";
-		let x2 = self.rustbox.width()/2 - text2.len()/2;
+		let text2 = "Venstre/Hojre";
+		let x2 = mid - text2.len();
 		
 		self.rustbox.print(x2, 3, rustbox::RB_BOLD, Color::Default, Color::Default, "Venstre");
 		self.rustbox.print(x2+7, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, "/");
@@ -60,6 +63,17 @@ impl Video {
 		match self.mode {
 			Mode::Normal => self.rustbox.print(x2+13, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Skift"),
 			Mode::Moving => self.rustbox.print(x2+13, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Flyt "),
+		}
+		
+		let text3 = "Op/Ned";
+		let x3 = mid - text3.len();
+		
+		self.rustbox.print(x3, 4, rustbox::RB_BOLD, Color::Default, Color::Default, "Op");
+		self.rustbox.print(x3+2, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, "/");
+		self.rustbox.print(x3+3, 4, rustbox::RB_BOLD, Color::Default, Color::Default, "Ned");
+		match self.mode {
+			Mode::Normal => self.rustbox.print(x3+6, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!(": Skift {} felter", self.bigskip)),
+			Mode::Moving => self.rustbox.print(x3+6, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!(": Flyt  {} felter", self.bigskip)),
 		}
 		self.rustbox.present();
 	}
@@ -291,7 +305,10 @@ fn main() {
 	
 	let mut plader = parse_bankopladeformat(&filename);
 	
-	let mut v = Video::init();
+	let total = plader.len();
+	let bigskip = if total/100 < 10 { 10 } else { total/100 };
+	
+	let mut v = Video::init(bigskip);
 	
 	let mut current: usize = 0;
 	let mut mode = Mode::Normal;
@@ -337,26 +354,32 @@ fn main() {
 						v.set_mode(mode);
 					},
 					Some(Key::Right) => {
-						match mode {
-							Mode::Moving => {
-								if current + 1 < plader.len() {
-									plader.swap(current, current+1);
-								}
-							},
-							_ => {},
+						if mode == Mode::Moving && current + 1 < total {
+							plader.swap(current, current+1);
 						}
-						current = if current + 1 < plader.len() { current + 1 } else { current };
+						current = if current + 1 < total { current + 1 } else { current };
 					},
 					Some(Key::Left) => {
-						match mode {
-							Mode::Moving => {
-								if current > 0 {
-									plader.swap(current-1, current);
-								}
-							},
-							_ => {},
+						if mode == Mode::Moving && current > 0 {
+							plader.swap(current-1, current);
 						}
 						current = if current > 0 { current - 1 } else { current };
+					},
+					Some(Key::Up) => {
+						if mode == Mode::Moving && current + 1 < total {
+							plader.swap(current, if current + bigskip >= total {
+								total - 1 
+							} else {
+								current+bigskip
+							});
+						}
+						current = if current + 1 < total { if current + bigskip >= total { total - 1 } else { current + bigskip } } else { current };
+					},
+					Some(Key::Down) => {
+						if mode == Mode::Moving && current > 0 {
+							plader.swap(if current < bigskip { 0 } else { current - bigskip }, current);
+						}
+						current = if current > 0 { if current < bigskip { 0 } else { current - bigskip } } else { current };
 					},
 					_ => {},
 				}
