@@ -14,6 +14,7 @@ static BANKOROWS: usize = 3;
 
 #[derive(Clone, Copy, PartialEq)]
 enum Mode {
+	Loading,
 	Normal,
 	Moving,
 }
@@ -25,7 +26,7 @@ struct Video {
 }
 
 impl Video {
-	fn init(bigskip: usize) -> Video {
+	fn init() -> Video {
 		let rustbox = match RustBox::init(Default::default()) {
 			Ok(val) => val,
 			Err(e) => panic!("{}", e),
@@ -33,15 +34,44 @@ impl Video {
 		
 		let v = Video {
 			rustbox: rustbox,
-			mode: Mode::Normal,
-			bigskip: bigskip,
+			mode: Mode::Loading,
+			bigskip: 0,
 		};
 		
-		v.draw_top();
+		v.start_load();
 		
 		v
 	}
-		
+	
+	fn bottom_status(&self, text: &str) {
+		self.rustbox.print(1, self.rustbox.height()-2, rustbox::RB_BOLD, Color::Default, Color::Default, text);
+		self.rustbox.present();
+	}
+	
+	fn start_load(&self) {
+		self.bottom_status("Åbner filen...");
+	}
+	
+	fn inc_progressbar(&self, p: u64, size: u64, prevprog: u64) -> u64 {
+		let width = self.rustbox.width() as f64 - 6.0;
+		let prog = ((p as f64/size as f64) * 100.0) as u64;
+		let newprog = ((p as f64/size as f64) * width) as u64;
+		if newprog > prevprog {
+			self.rustbox.print(1, self.rustbox.height()-1, rustbox::RB_NORMAL, Color::Default, Color::Default, &(0..newprog).map(|_| "#").collect::<String>());
+			self.rustbox.print(self.rustbox.width() - 5, self.rustbox.height()-1, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!("{}%", prog));
+			self.rustbox.present();
+		}
+		newprog
+	}
+	
+	fn load_complete(&mut self, bigskip: usize) {
+		self.bigskip = bigskip;
+		self.mode = Mode::Normal;
+		self.rustbox.print(0, self.rustbox.height()-2, rustbox::RB_NORMAL, Color::Default, Color::Default, &(0..self.rustbox.width()).map(|_| " ").collect::<String>());
+		self.rustbox.print(0, self.rustbox.height()-1, rustbox::RB_NORMAL, Color::Default, Color::Default, &(0..self.rustbox.width()).map(|_| " ").collect::<String>());
+		self.draw_top();
+	}
+	
 	fn draw_top(&self) {
 		let text = "L: Luk  G: Gem  F: Flyttetilstand";
 		let mid = self.rustbox.width()/2;
@@ -63,6 +93,7 @@ impl Video {
 		match self.mode {
 			Mode::Normal => self.rustbox.print(x2+13, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Skift"),
 			Mode::Moving => self.rustbox.print(x2+13, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Flyt "),
+			_ => {},
 		}
 		
 		let text3 = "Op/Ned";
@@ -74,6 +105,7 @@ impl Video {
 		match self.mode {
 			Mode::Normal => self.rustbox.print(x3+6, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!(": Skift {} felter", self.bigskip)),
 			Mode::Moving => self.rustbox.print(x3+6, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!(": Flyt  {} felter", self.bigskip)),
+			_ => {},
 		}
 		self.rustbox.present();
 	}
@@ -233,7 +265,7 @@ fn save_plader(filename: &str, plader: &Vec<[[u16; 9]; 3]>) -> Result<usize, io:
 	Ok(plader.len() as usize)
 }
 
-fn parse_bankopladeformat(filename: &str) -> Vec<[[u16; 9]; 3]> {
+fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
 	let mut f = match File::open(&filename) {
 		Ok(val) => val,
 		Err(_) => panic!("Den fil kan jeg altså ikke åbne, Preben."),
@@ -246,6 +278,11 @@ fn parse_bankopladeformat(filename: &str) -> Vec<[[u16; 9]; 3]> {
 		Err(_) => panic!("Det er sgu' da ikke til at læse..."),
 	}
 	
+	let size = match f.metadata() {
+		Ok(m) => m.len(),
+		Err(_) => 1000,
+	};
+	
 	let mut plader: Vec<[[u16; 9]; 3]> = Vec::new();
 	
 	let mut plade: [[u16; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -254,6 +291,10 @@ fn parse_bankopladeformat(filename: &str) -> Vec<[[u16; 9]; 3]> {
 	let mut row = 0;
 	let mut col = 0;
 	let mut current_field: i16 = -1;
+	let mut cn = 0;
+	let mut p = 0;
+	
+	v.bottom_status("Indlæser bankopladefilen...");
 	
 	for c in buffer.chars() {
 		if col >= BANKOCOLS {
@@ -292,6 +333,8 @@ fn parse_bankopladeformat(filename: &str) -> Vec<[[u16; 9]; 3]> {
 				};
 			}
 		}
+		cn += 1;
+		p = v.inc_progressbar(cn, size, p);
 	}
 	
 	plader
@@ -303,12 +346,14 @@ fn main() {
 		None      => panic!("Du glemte vist at angive en fil, dit kvaj!"),
 	};
 	
-	let mut plader = parse_bankopladeformat(&filename);
+	let mut v = Video::init();
+	
+	let mut plader = parse_bankopladeformat(&filename, &v);
 	
 	let total = plader.len();
 	let bigskip = if total/100 < 10 { 10 } else { total/100 };
 	
-	let mut v = Video::init(bigskip);
+	v.load_complete(bigskip);
 	
 	let mut current: usize = 0;
 	let mut mode = Mode::Normal;
@@ -350,6 +395,7 @@ fn main() {
 						mode = match mode { 
 							Mode::Normal => Mode::Moving,
 							Mode::Moving => Mode::Normal,
+							Mode::Loading => Mode::Normal,
 						};
 						v.set_mode(mode);
 					},
