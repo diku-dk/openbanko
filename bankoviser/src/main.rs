@@ -266,17 +266,17 @@ fn save_plader(filename: &str, plader: &Vec<[[u16; 9]; 3]>) -> Result<usize, io:
 }
 
 fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
-	let mut f = match File::open(&filename) {
+	let f = match File::open(&filename) {
 		Ok(val) => val,
 		Err(_) => panic!("Den fil kan jeg altså ikke åbne, Preben."),
 	};
 	
-	let mut buffer = String::new();
+	/*let mut buffer = String::new();
 	
 	match f.read_to_string(&mut buffer) {
 		Ok(_) => {},
 		Err(_) => panic!("Det er sgu' da ikke til at læse..."),
-	}
+	}*/
 	
 	let size = match f.metadata() {
 		Ok(m) => m.len(),
@@ -296,7 +296,11 @@ fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
 	
 	v.bottom_status("Indlæser bankopladefilen...");
 	
-	for c in buffer.chars() {
+	//let mut cc = [0];
+	for byte in f.bytes() {
+//	while match f.read_exact(&mut cc[..]) { Ok(_) => true, Err(_) => false } {
+//		let c = cc[0] as char;
+		let c = byte.unwrap() as char;
 		if col >= BANKOCOLS {
 			panic!("Slet format: For mange felter! ({})", c);
 		}
