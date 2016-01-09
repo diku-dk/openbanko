@@ -1,0 +1,15 @@
+#/bin/sh
+
+set -e # Exit on first error.
+
+path=$(mktemp)
+
+trap 'rm $path' INT QUIT TERM EXIT
+
+"$(dirname "$0")"/bankopladeformat2tex > "$path.tex"
+
+cd "$(dirname "$path")"
+
+pdflatex -halt-on-error "$path.tex" 2>&1 > /dev/null
+
+cat "$path.pdf"

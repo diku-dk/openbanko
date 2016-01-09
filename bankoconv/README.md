@@ -1,14 +1,28 @@
 Bankoconv
 =========
 
+Kør `make` for at oversætte programmerne.
+
+
 bankopladeformat2html
 ---------------------
 
-Fra go-filen:
+Konvertér dine bankoplader til en kæmpe HTML-fil.  Kør
 
-    $ cat fil.bankopladeformat | go run bankopladeformat2html.go > fil.html
+    $ ./bankopladeformat2html < sti/til/plader.bankopladeformat > plader.html
 
-Eller byg og leg med den:
+Hvis du ikke vil oversætte Go-koden, kan du i stedet køre
 
-    $ go build bankopladeformat2html.go
-    $ cat fil.bankopladeformat | ./bankopladeformat2html > fil.html
+    $ go run bankopladeformat2html.go < sti/til/plader.bankopladeformat > plader.html
+
+
+bankopladeformat2tex
+--------------------
+
+Konvertér dine bankoplader til en fin LaTeX-fil.  Kør
+
+    $ ./bankopladeformat2tex < sti/til/plader.bankopladeformat > plader.tex
+
+eller blot
+
+    $ ./bankopladeformat2pdf < sti/til/plader.bankopladeformat > plader.pdf
