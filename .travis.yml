@@ -7,11 +7,14 @@ before_install:
   - multirust default 1.5.0
   - rustc --version
   - cd ..
-  - wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
-  - tar -C $HOME -xzf go1.5.2.linux-amd64.tar.gz
-  - export GOROOT=$HOME/go
-  - export PATH=$PATH:$GOROOT/bin
-  - export GOPATH=$GOROOT
+  - uname -a
+#  - wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
+#  - tar -C $HOME -xzf go1.5.2.linux-amd64.tar.gz
+#  - export GOROOT=$HOME/go
+#  - export PATH=$PATH:$GOROOT/bin
+#  - export GOPATH=$GOROOT
+   - apt install golang
+   - sudo apt-get install golang
 #  - sudo apt-get install build-essentials
 
 install:
