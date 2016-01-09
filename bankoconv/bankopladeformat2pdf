@@ -4,7 +4,7 @@ set -e # Exit on first error.
 
 path=$(mktemp)
 
-trap 'rm $path' INT QUIT TERM EXIT
+trap 'rm -f "$path.tex" "$path.pdf"' INT QUIT TERM EXIT
 
 "$(dirname "$0")"/bankopladeformat2tex > "$path.tex"
 
