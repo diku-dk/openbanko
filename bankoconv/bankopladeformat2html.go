@@ -2,10 +2,9 @@ package main
 
 import (
 	"bytes"
-	"flag"
+	"html/template"
 	"log"
 	"os"
-	"html/template"
 )
 
 type BankoPlade [3][9]uint8
@@ -16,12 +15,8 @@ const ASCII0 = 48
 const BANKOROWS = 3
 const BANKOCOLS = 9
 
-func parseBankoPladeFormat(filename string) BankoPlader {
-	f, err := os.Open(filename)
-
-	if err != nil {
-		log.Fatal(err)
-	}
+func parseBankoPladeFormat() BankoPlader {
+	f := os.Stdin
 
 	var plader BankoPlader
 	plade_b := make([]byte, bankoPladeSize)
@@ -60,14 +55,7 @@ func parseBankoPladeFormat(filename string) BankoPlader {
 }
 
 func main() {
-	flag.Parse()
-	if len(flag.Args()) != 2 {
-		log.Fatal("To filer, tak!")
-	}
-	filename := flag.Arg(0)
-	plader := parseBankoPladeFormat(filename)
-
-	htmlfilename := flag.Arg(1)
+	plader := parseBankoPladeFormat()
 
 	out := bytes.NewBufferString("")
 	t, err := template.New("html").Parse(`<!doctype html>
@@ -118,15 +106,7 @@ body {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
-	f, err := os.Create(htmlfilename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	
-	_, err = f.Write(out.Bytes())
-	if err != nil {
-		log.Fatal(err)
-	}
+
+	os.Stdout.Write(out.Bytes())
 }
 
