@@ -17,7 +17,7 @@ Learning Danish is advised.
 
 ## Bankopladeformat
 
-The specification for banko boards: [Bankopladeformat2.md]()
+The specification for banko boards: [Bankopladeformat2.md](Bankopladeformat2.md)
 
 
 ## Citation
