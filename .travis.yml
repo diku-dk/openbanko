@@ -11,7 +11,7 @@ before_install:
   - rustc --version
   - cd ..
   - sudo apt-get update
-  - apt-get install golang
+  - sudo apt-get install golang
 #  - wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
 #  - tar -C $HOME -xzf go1.5.2.linux-amd64.tar.gz
 #  - export GOROOT=$HOME/go
