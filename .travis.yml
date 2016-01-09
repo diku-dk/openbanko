@@ -1,5 +1,6 @@
 language: c
 
+sudo: required
 dist: trusty
 
 before_install:
@@ -9,7 +10,7 @@ before_install:
   - multirust default 1.5.0
   - rustc --version
   - cd ..
-  - uname -a
+#  - uname -a
 #  - wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
 #  - tar -C $HOME -xzf go1.5.2.linux-amd64.tar.gz
 #  - export GOROOT=$HOME/go
