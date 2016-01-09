@@ -1,13 +1,15 @@
 language: c
 
 before_install:
-  - sudo apt-get install golang
   - git clone --recursive https://github.com/brson/multirust && cd multirust
   - git submodule update --init
   - ./build.sh && sudo ./install.sh
   - multirust default 1.5.0
   - rustc --version
   - cd ..
+  - wget https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz
+  - tar -C /usr/local -xzf go1.5.2.linux-amd64.tar.gz
+  - export PATH=$PATH:/usr/local/go/bin
 #  - sudo apt-get install build-essentials
 
 install:
