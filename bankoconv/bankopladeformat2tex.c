@@ -79,7 +79,7 @@ void boards_to_tex(FILE *out, FILE *in) {
 
   fputs("\\end{center}\n", out);
   fputs("\\end{document}\n", out);
-  
+
   banko_reader_close(&reader);
 }
 
