@@ -11,6 +11,7 @@ before_install:
   - tar -C $HOME -xzf go1.5.2.linux-amd64.tar.gz
   - export GOROOT=$HOME/go
   - export PATH=$PATH:$GOROOT/bin
+  - export GOPATH=$GOROOT
 #  - sudo apt-get install build-essentials
 
 install:
