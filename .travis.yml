@@ -1,6 +1,7 @@
 language: c
 
 before_install:
+  - sudo apt-get install golang
   - git clone --recursive https://github.com/brson/multirust && cd multirust
   - git submodule update --init
   - ./build.sh && sudo ./install.sh
@@ -13,6 +14,7 @@ install:
   - (cd bankopladeformat; make)
   - (cd bankopak; make)
   - (cd bankoviser; cargo build)
+  - (cd bankoconv; go build bankopladeformat2html.go)
 
 script:
   - (cd bankopak; make test)
