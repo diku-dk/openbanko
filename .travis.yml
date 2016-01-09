@@ -28,7 +28,7 @@ install:
   - (cd bankopak; make)
   - (cd bankoviser; cargo build)
   - (cd bankoconv; go build bankopladeformat2html.go)
-  - (cd barc; cabal build)
+  - (cd barc; cabal configure && cabal build)
 
 script:
   - (cd bankopak; make test)
