@@ -1,8 +1,24 @@
 # banko
 
+Tools and toys for Big Banko processing
+
 [![Build Status](https://travis-ci.org/Athas/banko.svg?branch=master)](https://travis-ci.org/Athas/banko)
 
-Tools and toys for Big Banko processing
+
+## Utilities
+
++ [bankopak](bankopak/README.md): Compress and decompress banko boards
++ [bankoconv](bankoconv/README.md): Convert between banko formats
++ [bankoviser](bankoviser/README.md): Interact with banko boards in the terminal
++ [barc](barc/README.md): Check if boards are valid banko boards
+
+Learning Danish is advised.
+
+
+## Bankopladeformat
+
+The specification for banko boards: [Bankopladeformat2.md]()
+
 
 ## Citation
 
