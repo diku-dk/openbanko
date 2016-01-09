@@ -159,8 +159,8 @@ simplifyM e = case e of
     e0' <- ensureIntM "reduce neutral element must be int" =<< simplifyM e0
     e1' <- ensureListM "reduce source must be list" =<< simplifyM e1
     indexId <- newIndexId
-    fe <- ensureIntM "reduce body must be int" =<< simplifyFunReduceM f indexId e1'
-    return $ E1.IntExp $ E1.Reduce indexId (E1.Length e1') e0' fe
+    fe <- ensureIntM "reduce body must be int" =<< simplifyFunReduceM f indexId
+    return $ E1.IntExp $ E1.Reduce indexId e1' e0' fe
   E0.And e0 e1 -> E1.IntExp <$>
                   (logAnd
                    <$> (ensureIntM "'and' args must be int" =<< simplifyM e0)
@@ -207,11 +207,11 @@ simplifyFunMapM (E0.Fun args e) indexId eSrc = localBindings $ do
     _ -> fail "map function must take one argument"
   simplifyM e
 
-simplifyFunReduceM :: E0.Fun -> Int -> E1.ExpList -> SimplifyM E1.Exp
-simplifyFunReduceM (E0.Fun args e) indexId eSrc = localBindings $ do
+simplifyFunReduceM :: E0.Fun -> Int -> SimplifyM E1.Exp
+simplifyFunReduceM (E0.Fun args e) indexId = localBindings $ do
   case args of
     [arg0, arg1] -> do
-      bind arg0 $ E1.IntExp $ E1.PrevReduceValue indexId
-      bind arg1 $ E1.IntExp $ E1.Index eSrc (E1.CurrentIndex indexId)
+      bind arg0 $ E1.IntExp $ E1.ReduceValueFirst indexId
+      bind arg1 $ E1.IntExp $ E1.ReduceValueSecond indexId
     _ -> fail "reduce function must take two arguments"
   simplifyM e

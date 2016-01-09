@@ -11,7 +11,8 @@ import Control.Monad
 import Prelude
 
 data Context = Context { ctxCurrentIndexes :: M.Map Int E2.Exp
-                       , ctxPrevReduceValues :: M.Map Int E2.Exp
+                       , ctxReduceValueFirsts :: M.Map Int E2.Exp
+                       , ctxReduceValueSeconds :: M.Map Int E2.Exp
                        }
              deriving (Show)
 
@@ -38,7 +39,7 @@ instance Functor UnrollM where
 
 
 emptyContext :: Context
-emptyContext = Context M.empty M.empty
+emptyContext = Context M.empty M.empty M.empty
 
 maybeFail :: String -> Maybe a -> UnrollM a
 maybeFail _ (Just a) = return a
@@ -71,17 +72,30 @@ getIteration index = do
   iters <- ctxCurrentIndexes <$> getContext
   maybeFail "reduce index not found" $ M.lookup index iters
 
-getPrevReduceValue :: Int -> UnrollM E2.Exp
-getPrevReduceValue index = do
-  vals <- ctxPrevReduceValues <$> getContext
-  maybeFail "reduce index not found" $ M.lookup index vals
+getReduceValueFirst :: Int -> UnrollM E2.Exp
+getReduceValueFirst index = do
+  vals <- ctxReduceValueFirsts <$> getContext
+  maybeFail "first reduce value index not found" $ M.lookup index vals
 
-withPrevReduceValue :: Int -> E2.Exp -> UnrollM a -> UnrollM a
-withPrevReduceValue index val m = do
-  cur <- ctxPrevReduceValues <$> getContext
-  modifyContext $ \ctx -> ctx { ctxPrevReduceValues = M.insert index val cur }
+getReduceValueSecond :: Int -> UnrollM E2.Exp
+getReduceValueSecond index = do
+  vals <- ctxReduceValueSeconds <$> getContext
+  maybeFail "first reduce value index not found" $ M.lookup index vals
+
+withReduceValueFirst :: Int -> E2.Exp -> UnrollM a -> UnrollM a
+withReduceValueFirst index val m = do
+  cur <- ctxReduceValueFirsts <$> getContext
+  modifyContext $ \ctx -> ctx { ctxReduceValueFirsts = M.insert index val cur }
   a <- m
-  modifyContext $ \ctx -> ctx { ctxPrevReduceValues = cur }
+  modifyContext $ \ctx -> ctx { ctxReduceValueFirsts = cur }
+  return a
+
+withReduceValueSecond :: Int -> E2.Exp -> UnrollM a -> UnrollM a
+withReduceValueSecond index val m = do
+  cur <- ctxReduceValueSeconds <$> getContext
+  modifyContext $ \ctx -> ctx { ctxReduceValueSeconds = M.insert index val cur }
+  a <- m
+  modifyContext $ \ctx -> ctx { ctxReduceValueSeconds = cur }
   return a
 
 getBoardWidth :: UnrollM Int
@@ -109,17 +123,15 @@ unrollExpM e = case e of
   E1.Const n -> return $ E2.Const n
   E1.CurrentIndex index -> getIteration index
   E1.Length eList -> lengthOf eList
-  E1.Reduce v eLen eNeutral eBody -> do
-    len <- ensureConstM
-           "length expression in inner reduce must be evaluable at compile time"
-           =<< unrollExpM eLen
+  E1.Reduce v eList eNeutral eBody -> do
     eNeutral' <- unrollExpM eNeutral
-    let body :: E2.Exp -> Int -> UnrollM E2.Exp
-        body p i = withPrevReduceValue v p
-                   $ localIteration v (E2.Const i)
-                   $ unrollExpM eBody
-    foldM body eNeutral' [0..len - 1]
-  E1.PrevReduceValue v -> getPrevReduceValue v
+    let body :: E2.Exp -> E2.Exp -> UnrollM E2.Exp
+        body rvalFirst rvalSecond = withReduceValueFirst v rvalFirst
+                                    $ withReduceValueSecond v rvalSecond
+                                    $ unrollExpM eBody
+    reduceM body eNeutral' eList
+  E1.ReduceValueFirst v -> getReduceValueFirst v
+  E1.ReduceValueSecond v -> getReduceValueSecond v
   E1.Nand e0 e1 -> do
     e0' <- unrollExpM e0
     e1' <- unrollExpM e1
@@ -134,6 +146,31 @@ unrollExpM e = case e of
   E1.Modulo e0 e1 -> unrollArith E2.Modulo mod e0 e1
   E1.Gt e0 e1 -> unrollArith E2.Gt (\a b -> boolToInt (a > b)) e0 e1
   E1.Eq e0 e1 -> unrollArith E2.Eq (\a b -> boolToInt (a == b)) e0 e1
+
+reduceM :: (E2.Exp -> E2.Exp -> UnrollM E2.Exp) -> E2.Exp -> E1.ExpList
+           -> UnrollM E2.Exp
+reduceM f ne xs = do
+  xsLen <- ensureConstM
+           "length expression in reduce must be evaluable at compile time"
+           =<< unrollExpM (E1.Length xs)
+  let is :: [Int]
+      is = [0..xsLen - 1]
+  es <- mapM (indexOf xs) is
+  halve f ne es
+
+halve :: Monad m => (a -> a -> m a) -> a -> [a] -> m a
+halve f ne xs = case xs of
+  [] -> return ne
+  [x] -> return x
+  [x0, x1] -> f x0 x1
+  _ -> do
+    let (a, b) = splitEqual xs
+    xs0 <- halve f ne a
+    xs1 <- halve f ne b
+    f xs0 xs1
+
+splitEqual :: [a] -> ([a], [a])
+splitEqual xs = splitAt (length xs `div` 2) xs
 
 unrollArith :: (E2.Exp -> E2.Exp -> E2.Exp)
                -> (Int -> Int -> Int)

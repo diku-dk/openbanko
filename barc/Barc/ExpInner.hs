@@ -15,7 +15,10 @@ data ExpList = BoardXs
              | BoardYs
              | BoardValues
              | List [ExpInt]
-             | Map Int ExpInt ExpInt
+             | Map { mapId :: Int
+                   , mapLength :: ExpInt
+                   , mapBody :: ExpInt
+                   }
              deriving (Show, Eq)
 
 data ExpInt = BoardWidth
@@ -24,8 +27,13 @@ data ExpInt = BoardWidth
             | Const Int
             | CurrentIndex Int
             | Length ExpList
-            | Reduce Int ExpInt ExpInt ExpInt
-            | PrevReduceValue Int
+            | Reduce { reduceId :: Int
+                     , reduceList :: ExpList
+                     , reduceNeutral :: ExpInt
+                     , reduceBody :: ExpInt
+                     }
+            | ReduceValueFirst Int
+            | ReduceValueSecond Int
             | Nand ExpInt ExpInt
             | Add ExpInt ExpInt
             | Subtract ExpInt ExpInt
