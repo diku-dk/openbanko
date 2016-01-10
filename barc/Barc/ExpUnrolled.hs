@@ -1,19 +1,31 @@
-module Barc.ExpUnrolled (Prog(..), Exp(..)) where
+module Barc.ExpUnrolled (Prog(..), Exp(..),
+                         ExpInt(..), ExpBool(..)) where
 
 
 data Prog = Prog { progWidth :: Int
                  , progHeight :: Int
-                 , progExp :: Exp
+                 , progExp :: ExpBool
                  }
           deriving (Show, Eq)
 
-data Exp = BoardValue Int
-         | Const Int
-         | Nand Exp Exp
-         | Add Exp Exp
-         | Subtract Exp Exp
-         | Multiply Exp Exp
-         | Modulo Exp Exp
-         | Eq Exp Exp
-         | Gt Exp Exp
+data Exp = IntExp ExpInt
+         | BoolExp ExpBool
          deriving (Show, Eq)
+
+data ExpInt = BoardValue Int
+            | Const Int
+            | IntConv ExpBool
+            | Add ExpInt ExpInt
+            | Subtract ExpInt ExpInt
+            | Multiply ExpInt ExpInt
+            | Modulo ExpInt ExpInt
+            deriving (Show, Eq)
+
+data ExpBool = BoolVal Bool
+             | BoolConv ExpInt
+             | And ExpBool ExpBool
+             | Or ExpBool ExpBool
+             | Not ExpBool
+             | Eq ExpInt ExpInt
+             | Gt ExpInt ExpInt
+             deriving (Show, Eq)

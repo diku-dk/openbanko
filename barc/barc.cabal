@@ -37,6 +37,7 @@ Library
                    Barc.ExpInner
                    Barc.Unroller
                    Barc.ExpUnrolled
+                   Barc.ConstantFolder
                    Barc.CCodeGen
                    Barc.FutharkGen
 

@@ -1,15 +1,15 @@
 module Barc.Runner (runStringFuthark, runFromFile, runFromFileFuthark) where
 
-import Control.Applicative
-
 import Barc.Parser (parseString)
 import Barc.Simplifier (simplify)
 import Barc.Unroller (unroll)
 import Barc.CCodeGen (genCode)
 import Barc.FutharkGen (genFuthark)
 
+import Control.Applicative
 import Prelude
 import qualified Data.Text as T
+
 
 runString :: String -> Either String T.Text
 runString s = case parseString s of

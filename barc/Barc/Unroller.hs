@@ -2,6 +2,7 @@ module Barc.Unroller (unroll) where
 
 import qualified Barc.ExpInner as E1
 import qualified Barc.ExpUnrolled as E2
+import Barc.ConstantFolder (constantFoldInt, constantFoldBool)
 
 import Control.Applicative
 import qualified Data.Map as M
@@ -10,9 +11,12 @@ import Control.Monad
 
 import Prelude
 
-data Context = Context { ctxCurrentIndexes :: M.Map Int E2.Exp
-                       , ctxReduceValueFirsts :: M.Map Int E2.Exp
-                       , ctxReduceValueSeconds :: M.Map Int E2.Exp
+
+data Context = Context { ctxCurrentIndexes :: M.Map Int E2.ExpInt
+                       , ctxReduceIntValueFirsts :: M.Map Int E2.ExpInt
+                       , ctxReduceIntValueSeconds :: M.Map Int E2.ExpInt
+                       , ctxReduceBoolValueFirsts :: M.Map Int E2.ExpBool
+                       , ctxReduceBoolValueSeconds :: M.Map Int E2.ExpBool
                        }
              deriving (Show)
 
@@ -21,7 +25,8 @@ data Static = Static { staticWidth :: Int
                      }
             deriving (Show)
 
-newtype UnrollM a = UnrollM { evalUnrollM :: (Static, Context) -> Either String (Context, a) }
+newtype UnrollM a = UnrollM { evalUnrollM :: (Static, Context)
+                                             -> Either String (Context, a) }
 
 instance Monad UnrollM where
   m >>= g = UnrollM $ \(sta, ctx) -> do
@@ -39,7 +44,7 @@ instance Functor UnrollM where
 
 
 emptyContext :: Context
-emptyContext = Context M.empty M.empty M.empty
+emptyContext = Context M.empty M.empty M.empty M.empty M.empty
 
 maybeFail :: String -> Maybe a -> UnrollM a
 maybeFail _ (Just a) = return a
@@ -59,7 +64,7 @@ modifyContext f = do
 ask :: UnrollM Static
 ask = UnrollM $ \(sta, ctx) -> Right (ctx, sta)
 
-localIteration :: Int -> E2.Exp -> UnrollM a -> UnrollM a
+localIteration :: Int -> E2.ExpInt -> UnrollM a -> UnrollM a
 localIteration index ite m = do
   cur <- ctxCurrentIndexes <$> getContext
   modifyContext $ \ctx -> ctx { ctxCurrentIndexes = M.insert index ite cur }
@@ -67,35 +72,61 @@ localIteration index ite m = do
   modifyContext $ \ctx -> ctx { ctxCurrentIndexes = cur }
   return a
 
-getIteration :: Int -> UnrollM E2.Exp
-getIteration index = do
+getCurrentIndex :: Int -> UnrollM E2.ExpInt
+getCurrentIndex index = do
   iters <- ctxCurrentIndexes <$> getContext
   maybeFail "reduce index not found" $ M.lookup index iters
 
-getReduceValueFirst :: Int -> UnrollM E2.Exp
-getReduceValueFirst index = do
-  vals <- ctxReduceValueFirsts <$> getContext
+getReduceIntValueFirst :: Int -> UnrollM E2.ExpInt
+getReduceIntValueFirst index = do
+  vals <- ctxReduceIntValueFirsts <$> getContext
   maybeFail "first reduce value index not found" $ M.lookup index vals
 
-getReduceValueSecond :: Int -> UnrollM E2.Exp
-getReduceValueSecond index = do
-  vals <- ctxReduceValueSeconds <$> getContext
-  maybeFail "first reduce value index not found" $ M.lookup index vals
+getReduceIntValueSecond :: Int -> UnrollM E2.ExpInt
+getReduceIntValueSecond index = do
+  vals <- ctxReduceIntValueSeconds <$> getContext
+  maybeFail "second reduce value index not found" $ M.lookup index vals
 
-withReduceValueFirst :: Int -> E2.Exp -> UnrollM a -> UnrollM a
-withReduceValueFirst index val m = do
-  cur <- ctxReduceValueFirsts <$> getContext
-  modifyContext $ \ctx -> ctx { ctxReduceValueFirsts = M.insert index val cur }
+withReduceIntValueFirst :: Int -> E2.ExpInt -> UnrollM a -> UnrollM a
+withReduceIntValueFirst index val m = do
+  cur <- ctxReduceIntValueFirsts <$> getContext
+  modifyContext $ \ctx -> ctx { ctxReduceIntValueFirsts = M.insert index val cur }
   a <- m
-  modifyContext $ \ctx -> ctx { ctxReduceValueFirsts = cur }
+  modifyContext $ \ctx -> ctx { ctxReduceIntValueFirsts = cur }
   return a
 
-withReduceValueSecond :: Int -> E2.Exp -> UnrollM a -> UnrollM a
-withReduceValueSecond index val m = do
-  cur <- ctxReduceValueSeconds <$> getContext
-  modifyContext $ \ctx -> ctx { ctxReduceValueSeconds = M.insert index val cur }
+withReduceIntValueSecond :: Int -> E2.ExpInt -> UnrollM a -> UnrollM a
+withReduceIntValueSecond index val m = do
+  cur <- ctxReduceIntValueSeconds <$> getContext
+  modifyContext $ \ctx -> ctx { ctxReduceIntValueSeconds = M.insert index val cur }
   a <- m
-  modifyContext $ \ctx -> ctx { ctxReduceValueSeconds = cur }
+  modifyContext $ \ctx -> ctx { ctxReduceIntValueSeconds = cur }
+  return a
+
+getReduceBoolValueFirst :: Int -> UnrollM E2.ExpBool
+getReduceBoolValueFirst index = do
+  vals <- ctxReduceBoolValueFirsts <$> getContext
+  maybeFail "first reduce value index not found" $ M.lookup index vals
+
+getReduceBoolValueSecond :: Int -> UnrollM E2.ExpBool
+getReduceBoolValueSecond index = do
+  vals <- ctxReduceBoolValueSeconds <$> getContext
+  maybeFail "second reduce value index not found" $ M.lookup index vals
+
+withReduceBoolValueFirst :: Int -> E2.ExpBool -> UnrollM a -> UnrollM a
+withReduceBoolValueFirst index val m = do
+  cur <- ctxReduceBoolValueFirsts <$> getContext
+  modifyContext $ \ctx -> ctx { ctxReduceBoolValueFirsts = M.insert index val cur }
+  a <- m
+  modifyContext $ \ctx -> ctx { ctxReduceBoolValueFirsts = cur }
+  return a
+
+withReduceBoolValueSecond :: Int -> E2.ExpBool -> UnrollM a -> UnrollM a
+withReduceBoolValueSecond index val m = do
+  cur <- ctxReduceBoolValueSeconds <$> getContext
+  modifyContext $ \ctx -> ctx { ctxReduceBoolValueSeconds = M.insert index val cur }
+  a <- m
+  modifyContext $ \ctx -> ctx { ctxReduceBoolValueSeconds = cur }
   return a
 
 getBoardWidth :: UnrollM Int
@@ -107,56 +138,79 @@ getBoardHeight = staticHeight <$> ask
 unroll :: E1.Prog -> Either String E2.Prog
 unroll (E1.Prog w h e) = E2.Prog w h <$> unrollExp w h e
 
-unrollExp :: Int -> Int -> E1.Exp -> Either String E2.Exp
-unrollExp w h e = case e of
-  E1.ListExp _ -> Left "list expression cannot be main expression"
-  E1.IntExp e' -> snd <$> evalUnrollM (unrollExpM e') (Static w h, emptyContext)
+unrollExp :: Int -> Int -> E1.ExpBool -> Either String E2.ExpBool
+unrollExp w h e = snd <$> evalUnrollM (unrollBoolM e) (Static w h, emptyContext)
 
-unrollExpM :: E1.ExpInt -> UnrollM E2.Exp
-unrollExpM e = case e of
-  E1.BoardWidth -> E2.Const <$> getBoardWidth
-  E1.BoardHeight -> E2.Const <$> getBoardHeight
-  E1.Index eList eIndex -> do
-    index <- ensureConstM "index index must be evaluable at compile time"
-             =<< unrollExpM eIndex
-    indexOf eList index
+unrollIntM :: E1.ExpInt -> UnrollM E2.ExpInt
+unrollIntM e = constantFoldInt <$> unrollIntM' e
+
+unrollIntM' :: E1.ExpInt -> UnrollM E2.ExpInt
+unrollIntM' e = case e of
   E1.Const n -> return $ E2.Const n
-  E1.CurrentIndex index -> getIteration index
-  E1.Length eList -> lengthOf eList
-  E1.Reduce v eList eNeutral eBody -> do
-    eNeutral' <- unrollExpM eNeutral
-    let body :: E2.Exp -> E2.Exp -> UnrollM E2.Exp
-        body rvalFirst rvalSecond = withReduceValueFirst v rvalFirst
-                                    $ withReduceValueSecond v rvalSecond
-                                    $ unrollExpM eBody
-    reduceM body eNeutral' eList
-  E1.ReduceValueFirst v -> getReduceValueFirst v
-  E1.ReduceValueSecond v -> getReduceValueSecond v
-  E1.Nand e0 e1 -> do
-    e0' <- unrollExpM e0
-    e1' <- unrollExpM e1
-    return $ case (e0', e1') of
-      (E2.Const n0, E2.Const n1) -> E2.Const (if n0 > 0 && n1 > 0 then 0 else 1)
-      (E2.Const n0, _) -> if n0 == 0 then E2.Const 1 else E2.Nand e0' e1'
-      (_, E2.Const n1) -> if n1 == 0 then E2.Const 1 else E2.Nand e0' e1'
-      _ -> E2.Nand e0' e1'
-  E1.Add e0 e1 -> unrollArith E2.Add (+) e0 e1
-  E1.Subtract e0 e1 -> unrollArith E2.Subtract (-) e0 e1
-  E1.Multiply e0 e1 -> unrollArith E2.Multiply (*) e0 e1
-  E1.Modulo e0 e1 -> unrollArith E2.Modulo mod e0 e1
-  E1.Gt e0 e1 -> unrollArith E2.Gt (\a b -> boolToInt (a > b)) e0 e1
-  E1.Eq e0 e1 -> unrollArith E2.Eq (\a b -> boolToInt (a == b)) e0 e1
+  E1.IndexInt eList eIndex -> do
+    index <- ensureConstM =<< unrollIntM eIndex
+    indexIntOf eList index
+  E1.CurrentIndex v -> getCurrentIndex v
+  E1.LengthInt es -> lengthIntOf es
+  E1.LengthBool es -> lengthBoolOf es
+  E1.IntConv e' -> E2.IntConv <$> unrollBoolM e'
+  E1.ReduceInt v eList eNeutral eBody -> reduceIntHandle v eList eNeutral eBody
+  E1.ReduceIntValueFirst v -> getReduceIntValueFirst v
+  E1.ReduceIntValueSecond v -> getReduceIntValueSecond v
+  E1.Add e0 e1 -> E2.Add <$> unrollIntM e0 <*> unrollIntM e1
+  E1.Subtract e0 e1 -> E2.Subtract <$> unrollIntM e0 <*> unrollIntM e1
+  E1.Multiply e0 e1 -> E2.Multiply <$> unrollIntM e0 <*> unrollIntM e1
+  E1.Modulo e0 e1 -> E2.Modulo <$> unrollIntM e0 <*> unrollIntM e1
 
-reduceM :: (E2.Exp -> E2.Exp -> UnrollM E2.Exp) -> E2.Exp -> E1.ExpList
-           -> UnrollM E2.Exp
-reduceM f ne xs = do
-  xsLen <- ensureConstM
-           "length expression in reduce must be evaluable at compile time"
-           =<< unrollExpM (E1.Length xs)
-  let is :: [Int]
-      is = [0..xsLen - 1]
-  es <- mapM (indexOf xs) is
-  halve f ne es
+unrollBoolM :: E1.ExpBool -> UnrollM E2.ExpBool
+unrollBoolM e = constantFoldBool <$> unrollBoolM' e
+
+unrollBoolM' :: E1.ExpBool -> UnrollM E2.ExpBool
+unrollBoolM' e = case e of
+  E1.BoolVal b -> return $ E2.BoolVal b
+  E1.IndexBool eList eIndex -> do
+    index <- ensureConstM =<< unrollIntM eIndex
+    indexBoolOf eList index
+  E1.BoolConv e' -> E2.BoolConv <$> unrollIntM e'
+  E1.ReduceBool v eList eNeutral eBody -> reduceBoolHandle v eList eNeutral eBody
+  E1.ReduceBoolValueFirst v -> getReduceBoolValueFirst v
+  E1.ReduceBoolValueSecond v -> getReduceBoolValueSecond v
+  E1.And e0 e1 -> E2.And <$> unrollBoolM e0 <*> unrollBoolM e1
+  E1.Or e0 e1 -> E2.Or <$> unrollBoolM e0 <*> unrollBoolM e1
+  E1.Not e' -> E2.Not <$> unrollBoolM e'
+  E1.Eq e0 e1 -> E2.Eq <$> unrollIntM e0 <*> unrollIntM e1
+  E1.Gt e0 e1 -> E2.Gt <$> unrollIntM e0 <*> unrollIntM e1
+
+ensureConstM :: E2.ExpInt -> UnrollM Int
+ensureConstM e = case e of
+  E2.Const n -> return n
+  _ -> fail ("wanted constant, but got " ++ show e)
+
+reduceIntHandle :: Int -> E1.ExpInt -> E1.ExpIntList -> E1.ExpInt
+                   -> UnrollM E2.ExpInt
+reduceIntHandle v eNeutral eList eBody = do
+  eNeutral' <- unrollIntM eNeutral
+  let body :: E2.ExpInt -> E2.ExpInt -> UnrollM E2.ExpInt
+      body rvalFirst rvalSecond = withReduceIntValueFirst v rvalFirst
+                                  $ withReduceIntValueSecond v rvalSecond
+                                  $ unrollIntM eBody
+  eListLen <- ensureConstM =<< unrollIntM (E1.LengthInt eList)
+  let is = [0..eListLen - 1]
+  es <- mapM (indexIntOf eList) is
+  halve body eNeutral' es
+
+reduceBoolHandle :: Int -> E1.ExpBool -> E1.ExpBoolList -> E1.ExpBool
+                    -> UnrollM E2.ExpBool
+reduceBoolHandle v eNeutral eList eBody = do
+  eNeutral' <- unrollBoolM eNeutral
+  let body :: E2.ExpBool -> E2.ExpBool -> UnrollM E2.ExpBool
+      body rvalFirst rvalSecond = withReduceBoolValueFirst v rvalFirst
+                                  $ withReduceBoolValueSecond v rvalSecond
+                                  $ unrollBoolM eBody
+  eListLen <- ensureConstM =<< unrollIntM (E1.LengthBool eList)
+  let is = [0..eListLen - 1]
+  es <- mapM (indexBoolOf eList) is
+  halve body eNeutral' es
 
 halve :: Monad m => (a -> a -> m a) -> a -> [a] -> m a
 halve f ne xs = case xs of
@@ -172,54 +226,45 @@ halve f ne xs = case xs of
 splitEqual :: [a] -> ([a], [a])
 splitEqual xs = splitAt (length xs `div` 2) xs
 
-unrollArith :: (E2.Exp -> E2.Exp -> E2.Exp)
-               -> (Int -> Int -> Int)
-               -> E1.ExpInt -> E1.ExpInt -> UnrollM E2.Exp
-unrollArith opExp opInt e0 e1 = do
-  e0' <- unrollExpM e0
-  e1' <- unrollExpM e1
-  return $ case (e0', e1') of
-    (E2.Const n0, E2.Const n1) -> E2.Const (n0 `opInt` n1)
-    _ -> e0' `opExp` e1'
-
-boolToInt :: Bool -> Int
-boolToInt True = 1
-boolToInt False = 0
-
-ensureConstM :: String -> E2.Exp -> UnrollM Int
-ensureConstM err e = case e of
-  E2.Const n -> return n
-  _ -> fail err
-
-indexOf :: E1.ExpList -> Int -> UnrollM E2.Exp
-indexOf eList index = case eList of
-  E1.BoardXs -> do
-    w <- getBoardWidth
-    return $ E2.Const (index `mod` w)
-  E1.BoardYs -> do
-    w <- getBoardWidth
-    return $ E2.Const (index `div` w)
+indexIntOf :: E1.ExpIntList -> Int -> UnrollM E2.ExpInt
+indexIntOf eList index = case eList of
   E1.BoardValues -> return $ E2.BoardValue index
-  E1.List es -> case atMay es index of
-    Just e -> unrollExpM e
+  E1.ListInt es -> case atMay es index of
+    Just e -> unrollIntM e
     Nothing -> fail "list index out of range"
-  E1.Map v eLen eBody -> do
-    len <- ensureConstM
-           "length expression in inner map must be evaluable at compile time"
-           =<< unrollExpM eLen
-    let body i = localIteration v i $ unrollExpM eBody
+  E1.MapInt v eLen eBody -> do
+    len <- ensureConstM =<< unrollIntM eLen
+    let body i = localIteration v i $ unrollIntM eBody
     eNew <- mapM (body . E2.Const) [0..len - 1]
     case atMay eNew index of
       Just e -> return e
       Nothing -> fail "map list index out of range"
 
-lengthOf :: E1.ExpList -> UnrollM E2.Exp
-lengthOf eList = do
-  w <- getBoardWidth
-  h <- getBoardHeight
+indexBoolOf :: E1.ExpBoolList -> Int -> UnrollM E2.ExpBool
+indexBoolOf eList index = case eList of
+  E1.ListBool es -> case atMay es index of
+    Just e -> unrollBoolM e
+    Nothing -> fail "list index out of range"
+  E1.MapBool v eLen eBody -> do
+    len <- ensureConstM =<< unrollIntM eLen
+    let body i = localIteration v i $ unrollBoolM eBody
+    eNew <- mapM (body . E2.Const) [0..len - 1]
+    case atMay eNew index of
+      Just e -> return e
+      Nothing -> fail "map list index out of range"
+
+lengthIntOf :: E1.ExpIntList -> UnrollM E2.ExpInt
+lengthIntOf eList = do
   case eList of
-    E1.BoardXs -> return $ E2.Const (w * h)
-    E1.BoardYs -> return $ E2.Const (w * h)
-    E1.BoardValues -> return $ E2.Const (w * h)
-    E1.List es -> return $ E2.Const $ length es
-    E1.Map _ eLen _ -> unrollExpM eLen
+    E1.BoardValues -> do
+      w <- getBoardWidth
+      h <- getBoardHeight
+      return $ E2.Const (w * h)
+    E1.ListInt es -> return $ E2.Const $ length es
+    E1.MapInt _ eLen _ -> unrollIntM eLen
+
+lengthBoolOf :: E1.ExpBoolList -> UnrollM E2.ExpInt
+lengthBoolOf eList = do
+  case eList of
+    E1.ListBool es -> return $ E2.Const $ length es
+    E1.MapBool _ eLen _ -> unrollIntM eLen

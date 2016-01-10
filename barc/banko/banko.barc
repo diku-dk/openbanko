@@ -6,10 +6,10 @@ let board_is = seq 0 (* $width $height) in
 all {
 # Der benyttes 15 forskellige tal mellem 1 og 90. #
 == (sum (map (\i ->
-      and (> [$vs i] 0)
-          (all (map (\j -> or (and (== [$xs j] [$xs i]) (== [$ys j] [$ys i]))
-                              (not (== [$vs j] [$vs i])))
-                    board_is)))
+      int (and (> [$vs i] 0)
+               (all (map (\j -> or (and (== [$xs j] [$xs i]) (== [$ys j] [$ys i]))
+                                   (not (== [$vs j] [$vs i])))
+                         board_is))))
          board_is)) 15,
 all (map (\i -> and (>= [$vs i] 0) (<= [$vs i] 90)) board_is)
 ,
@@ -18,7 +18,8 @@ all (map (\i -> and (>= [$vs i] 0) (<= [$vs i] 90)) board_is)
 # i hver række. #
 and (all (map (\x1 -> any (map (\i -> and (== [$xs i] x1) (> [$vs i] 0)) board_is))
          (seq 0 $width)))
-    (all (map (\y1 -> == (sum (map (\i -> and (== [$ys i] y1) (> [$vs i] 0)) board_is)) 5)
+    (all (map (\y1 -> == (sum (map (\i -> int (and (== [$ys i] y1) (> [$vs i] 0)))
+                                   board_is)) 5)
               (seq 0 $height)))
 ,
 

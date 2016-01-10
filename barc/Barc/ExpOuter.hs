@@ -13,10 +13,14 @@ data Exp = BoardXs
          | BoardWidth
          | BoardHeight
          | Let String Exp Exp
+         | Var String
          | Const Int
+         | BoolVal Bool
          | List [Exp]
          | Index Exp Exp
          | Length Exp
+         | IntConv Exp
+         | BoolConv Exp
          | Seq Exp Exp
          | All Exp
          | Any Exp
@@ -36,7 +40,6 @@ data Exp = BoardXs
          | GtEq Exp Exp
          | Lt Exp Exp
          | LtEq Exp Exp
-         | Var String
          deriving (Show, Eq)
 
 data Fun = Fun [String] Exp

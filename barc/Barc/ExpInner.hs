@@ -1,44 +1,67 @@
-module Barc.ExpInner (Prog(..), Exp(..), ExpList(..), ExpInt(..)) where
+module Barc.ExpInner (Prog(..), Exp(..),
+                      ExpIntList(..), ExpBoolList(..),
+                      ExpInt(..), ExpBool(..)) where
 
 
 data Prog = Prog { progWidth :: Int
                  , progHeight :: Int
-                 , progExp :: Exp
+                 , progExp :: ExpBool
                  }
           deriving (Show, Eq)
 
-data Exp = ListExp ExpList
+data Exp = IntListExp ExpIntList
+         | BoolListExp ExpBoolList
          | IntExp ExpInt
+         | BoolExp ExpBool
          deriving (Show, Eq)
 
-data ExpList = BoardXs
-             | BoardYs
-             | BoardValues
-             | List [ExpInt]
-             | Map { mapId :: Int
-                   , mapLength :: ExpInt
-                   , mapBody :: ExpInt
-                   }
-             deriving (Show, Eq)
+data ExpIntList = BoardValues
+                | ListInt [ExpInt]
+                | MapInt { mapIntId :: Int
+                         , mapIntLength :: ExpInt
+                         , mapIntBody :: ExpInt
+                         }
+                deriving (Show, Eq)
 
-data ExpInt = BoardWidth
-            | BoardHeight
-            | Index ExpList ExpInt
-            | Const Int
+data ExpBoolList = ListBool [ExpBool]
+                 | MapBool { mapBoolId :: Int
+                           , mapBoolLength :: ExpInt
+                           , mapBoolBody :: ExpBool
+                           }
+                 deriving (Show, Eq)
+
+data ExpInt = Const Int
+            | IndexInt ExpIntList ExpInt
             | CurrentIndex Int
-            | Length ExpList
-            | Reduce { reduceId :: Int
-                     , reduceList :: ExpList
-                     , reduceNeutral :: ExpInt
-                     , reduceBody :: ExpInt
-                     }
-            | ReduceValueFirst Int
-            | ReduceValueSecond Int
-            | Nand ExpInt ExpInt
+            | LengthInt ExpIntList
+            | LengthBool ExpBoolList
+            | IntConv ExpBool
+            | ReduceInt { reduceIntId :: Int
+                        , reduceIntNeutral :: ExpInt
+                        , reduceIntList :: ExpIntList
+                        , reduceIntBody :: ExpInt
+                        }
+            | ReduceIntValueFirst Int
+            | ReduceIntValueSecond Int
             | Add ExpInt ExpInt
             | Subtract ExpInt ExpInt
             | Multiply ExpInt ExpInt
             | Modulo ExpInt ExpInt
-            | Eq ExpInt ExpInt
-            | Gt ExpInt ExpInt
             deriving (Show, Eq)
+
+data ExpBool = BoolVal Bool
+             | IndexBool ExpBoolList ExpInt
+             | BoolConv ExpInt
+             | ReduceBool { reduceBoolId :: Int
+                          , reduceBoolNeutral :: ExpBool
+                          , reduceBoolList :: ExpBoolList
+                          , reduceBoolBody :: ExpBool
+                          }
+             | ReduceBoolValueFirst Int
+             | ReduceBoolValueSecond Int
+             | And ExpBool ExpBool
+             | Or ExpBool ExpBool
+             | Not ExpBool
+             | Eq ExpInt ExpInt
+             | Gt ExpInt ExpInt
+             deriving (Show, Eq)

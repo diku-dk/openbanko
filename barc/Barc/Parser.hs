@@ -37,11 +37,11 @@ progP = do
   return $ Prog w h body
 
 expP :: Parser Exp
-expP = lexeme (parExpP <|> specialP <|> letP <|> constP <|> listP
-               <|> lengthP <|> seqP <|> allP <|> anyP <|> sumP <|> productP
-               <|> mapP <|> reduceP <|> andP <|> orP <|> notP <|> addP
-               <|> subtractP <|> multiplyP <|> moduloP <|> eqP <|> gtEqP
-               <|> gtP <|> ltEqP <|> ltP <|> indexP <|> varP)
+expP = lexeme (parExpP <|> specialP <|> letP <|> constP <|> boolP <|> listP
+               <|> intFunP <|> boolFunP <|> lengthP <|> seqP <|> allP <|> anyP
+               <|> sumP <|> productP <|> mapP <|> reduceP <|> andP <|> orP
+               <|> notP <|> addP <|> subtractP <|> multiplyP <|> moduloP
+               <|> eqP <|> gtEqP <|> gtP <|> ltEqP <|> ltP <|> indexP <|> varP)
 
 parExpP :: Parser Exp
 parExpP = between (symbol "(") (symbol ")") expP
@@ -82,6 +82,10 @@ letP = do
 constP :: Parser Exp
 constP = Const <$> intP
 
+boolP :: Parser Exp
+boolP = (symbol "T" >> return (BoolVal True)) <|>
+        (symbol "F" >> return (BoolVal False))
+
 listP :: Parser Exp
 listP = List <$> between (symbol "{") (symbol "}") (expP `sepBy` symbol ",")
 
@@ -89,6 +93,16 @@ lengthP :: Parser Exp
 lengthP = do
   symbol "length"
   Length <$> expP
+
+intFunP :: Parser Exp
+intFunP = do
+  symbol "int"
+  IntConv <$> expP
+
+boolFunP :: Parser Exp
+boolFunP = do
+  symbol "bool"
+  BoolConv <$> expP
 
 seqP :: Parser Exp
 seqP = do
