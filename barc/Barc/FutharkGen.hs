@@ -41,6 +41,7 @@ codeExp BoardValues = return "vs"
 codeExp BoardWidth = show <$> asks envWidth
 codeExp BoardHeight = show <$> asks envHeight
 codeExp (Const x) = return $ show x
+codeExp (BoolVal b) = return (if b then "True" else "False")
 codeExp (Var v) = return v
 
 codeExp (Let v e body) =
@@ -56,6 +57,10 @@ codeExp (Index a i) =
 -- Now comes the ugly one.
 codeExp (Length e) =
   futLet "tmp_arr" <$> codeExp e <*> pure "size(tmp_arr, 0)"
+
+codeExp (IntConv e) = fromBool <$> codeExp e  
+
+codeExp (BoolConv e) = toBool <$> codeExp e  
 
 codeExp (Seq start n) = do
   start' <- codeExp start
