@@ -122,7 +122,7 @@ impl Video {
 		self.rustbox.present();
 	}
 	
-	fn draw_previous_plade(&self, plade: [[u16; 9]; 3]) {
+	fn draw_previous_plade(&self, plade: [[u8; 9]; 3]) {
 		let endx = self.rustbox.width()/2 - (BANKOCOLS * 5)/2 - 3;
 		let y = 6;
 		
@@ -158,7 +158,7 @@ impl Video {
 		self.rustbox.present();
 	}
 	
-	fn draw_next_plade(&self, plade: [[u16; 9]; 3]) {
+	fn draw_next_plade(&self, plade: [[u8; 9]; 3]) {
 		let x = self.rustbox.width()/2 + (BANKOCOLS * 5)/2 + 3;
 		let y = 6;
 		
@@ -192,7 +192,7 @@ impl Video {
 	}
 	
 	fn draw_plade(&self, n: usize, total: usize,
-			      plade: [[u16; 9]; 3]) {
+			      plade: [[u8; 9]; 3]) {
 		// clean up!
 		for y in 0..BANKOROWS*4 + 1 {
 			self.rustbox.print(0, 6+y, rustbox::RB_NORMAL, Color::Default, Color::Default, &(0..self.rustbox.width()).map(|_| " ").collect::<String>());
@@ -243,7 +243,7 @@ impl Video {
 	}
 }
 
-fn save_plader(filename: &str, plader: &Vec<[[u16; 9]; 3]>) -> Result<usize, io::Error> {
+fn save_plader(filename: &str, plader: &Vec<[[u8; 9]; 3]>) -> Result<usize, io::Error> {
 	let mut f = try!(OpenOptions::new().write(true).open(filename));
 	
 	for plade in plader {
@@ -265,7 +265,9 @@ fn save_plader(filename: &str, plader: &Vec<[[u16; 9]; 3]>) -> Result<usize, io:
 	Ok(plader.len() as usize)
 }
 
-fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
+fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u8; 9]; 3]> {
+	let mut plader: Vec<[[u8; 9]; 3]> = Vec::new();
+	
 	let f = match File::open(&filename) {
 		Ok(val) => val,
 		Err(_) => panic!("Den fil kan jeg altså ikke åbne, Preben."),
@@ -283,23 +285,18 @@ fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
 		Err(_) => 1000,
 	};
 	
-	let mut plader: Vec<[[u16; 9]; 3]> = Vec::new();
-	
-	let mut plade: [[u16; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
-	                                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-	                                [0, 0, 0, 0, 0, 0, 0, 0, 0]];
+	let mut plade: [[u8; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
+	                               [0, 0, 0, 0, 0, 0, 0, 0, 0],
+	                               [0, 0, 0, 0, 0, 0, 0, 0, 0]];
 	let mut row = 0;
 	let mut col = 0;
-	let mut current_field: i16 = -1;
+	let mut current_field: i8 = -1;
 	let mut cn = 0;
 	let mut p = 0;
 	
 	v.bottom_status("Indlæser bankopladefilen...");
 	
-	//let mut cc = [0];
 	for byte in f.bytes() {
-//	while match f.read_exact(&mut cc[..]) { Ok(_) => true, Err(_) => false } {
-//		let c = cc[0] as char;
 		let c = byte.unwrap() as char;
 		if col >= BANKOCOLS {
 			panic!("Slet format: For mange felter! ({})", c);
@@ -309,7 +306,7 @@ fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
 		}
 		if c == '\n' {
 			if current_field >= 0 {
-				plade[row][col] = current_field as u16;
+				plade[row][col] = current_field as u8;
 				current_field = -1;
 				col = 0;
 				row += 1;
@@ -321,18 +318,18 @@ fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u16; 9]; 3]> {
 				row = 0;
 			}
 		} else if c == ' ' {
-			plade[row][col] = current_field as u16;
+			plade[row][col] = current_field as u8;
 			current_field = -1;
 			col += 1;
 		} else {
 			if current_field == -1 {
 				current_field = match c.to_digit(10) {
-					Some(val) => val as i16 * 10,
+					Some(val) => val as i8 * 10,
 					None      => 0,
 				};
 			} else {
 				current_field += match c.to_digit(10) {
-					Some(val) => val as i16,
+					Some(val) => val as i8,
 					None      => 0,
 				};
 			}

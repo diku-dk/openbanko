@@ -1,6 +1,6 @@
 [package]
 name = "bankoviser"
-version = "1.2.1"
+version = "1.2.2"
 authors = ["Svip <svip@flagland.org>"]
 
 [dependencies]
