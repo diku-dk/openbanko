@@ -5,7 +5,7 @@ dist: trusty
 
 before_install:
   # Rust
-  - git clone --recursive https://github.com/brson/multirust
+  - git clone --recursive --depth 1 https://github.com/brson/multirust
   - cd multirust
   - git submodule update --init
   - ./build.sh && sudo ./install.sh
