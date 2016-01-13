@@ -6,10 +6,10 @@
 all: bankopladeformat2html bankopladeformat2tex
 
 bankopladeformat2html: bankopladeformat2html.go
-	go build bankopladeformat2html.go
+	GOPATH=`pwd` go build bankopladeformat2html.go
 
 bankopladeformat2tex: bankopladeformat2tex.go
-	go build bankopladeformat2tex.go
+	GOPATH=`pwd` go build bankopladeformat2tex.go
 
 clean:
 	rm bankopladeformat2html
