@@ -290,7 +290,6 @@ impl BankoMemory {
 					};
 				}
 			}
-			//p = v.inc_progressbar(cn, size, p);
 		}
 		
 		plade
@@ -312,15 +311,6 @@ impl BankoMemory {
 	}
 }
 
-/*
-impl Index<usize> for BankoMemory {
-	type Output = [[u8; 9]; 3];
-	
-	fn index(&self, pos: usize) -> &[[u8; 9]; 3] {
-		&self.get_plade(pos as isize)
-	}
-}*/
-
 fn main() {
 	let filename = match env::args().nth(1) {
 		Some(val) => val,
@@ -330,8 +320,6 @@ fn main() {
 	let mut plader = BankoMemory::init(&filename);
 	
 	let mut v = Video::init();
-	
-	//let mut plader = parse_bankopladeformat(&filename, &v);
 	
 	let total = plader.len();
 	let bigskip = if total/100 < 10 { 10 } else { total/100 };
