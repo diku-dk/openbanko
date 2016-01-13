@@ -3,15 +3,18 @@ language: c
 sudo: required
 dist: trusty
 
+cache:
+  apt: true
+  directories:
+    - multirust
+
 before_install:
   # Rust
-  - git clone --recursive --depth 1 https://github.com/brson/multirust
-  - cd multirust
-  - git submodule update --init
-  - ./build.sh && sudo ./install.sh
+  - if [ ! -d multirust ]; then (git clone --recursive --depth 1 https://github.com/brson/multirust; cd multirust; git submodule update --init; ./build.sh && sudo ./install.sh); fi
   - multirust default 1.5.0
   - rustc --version
-  - cd ..
+  - pwd
+#  - cd ..
 
   # Haskell
   - sudo add-apt-repository -y ppa:hvr/ghc
