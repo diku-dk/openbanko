@@ -1,10 +1,5 @@
-use std::env;
-//use std::fs::{File, OpenOptions};
-//use std::io;
-//use std::io::Error;
+use std::{env, ptr, isize};
 use std::io::prelude::*;
-//use std::ops::{Index};
-use std::ptr;
 
 extern crate rustbox;
 
@@ -253,15 +248,13 @@ impl BankoMemory {
 	fn get_plade(&self, no: usize) -> [[u8; 9]; 3] {
 		let ptr = self.mmap.ptr() as *const [u8; 82];
 		let bytes = unsafe { *ptr.offset(no as isize) };
-		//let bytes: [u8; BANKOPLADESIZE];
-		//*bytes = start;
 	
-	let mut plade: [[u8; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
-	                               [0, 0, 0, 0, 0, 0, 0, 0, 0],
-	                               [0, 0, 0, 0, 0, 0, 0, 0, 0]];
-	let mut row = 0;
-	let mut col = 0;
-	let mut current_field: i8 = -1;
+		let mut plade: [[u8; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			                           [0, 0, 0, 0, 0, 0, 0, 0, 0],
+			                           [0, 0, 0, 0, 0, 0, 0, 0, 0]];
+		let mut row = 0;
+		let mut col = 0;
+		let mut current_field: i8 = -1;
 	
 		for byte in bytes.iter() {
 			let c = *byte as char;
@@ -304,8 +297,8 @@ impl BankoMemory {
 	}
 	
 	fn swap(&self, a: usize, b: usize) {
-		// TODO: Tjek faktisk om a og b ikke går itu når de
-		// skal de laves om til isize.
+		assert!(a <= isize::MAX as usize);
+		assert!(b <= isize::MAX as usize);
 		let p = self.mmap.ptr() as *mut [u8; 82];
 		unsafe {
 			let p_a = p.offset(a as isize);
