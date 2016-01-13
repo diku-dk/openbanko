@@ -11,10 +11,6 @@ Konvertér dine bankoplader til en kæmpe HTML-fil.  Kør
 
     $ ./bankopladeformat2html < sti/til/plader.bankopladeformat > plader.html
 
-Hvis du ikke vil oversætte Go-koden, kan du i stedet køre
-
-    $ go run bankopladeformat2html.go < sti/til/plader.bankopladeformat > plader.html
-
 
 bankopladeformat2tex
 --------------------
