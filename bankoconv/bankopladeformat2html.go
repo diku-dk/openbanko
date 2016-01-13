@@ -1,61 +1,15 @@
 package main
 
 import (
+	"banko"
 	"bytes"
 	"html/template"
 	"log"
 	"os"
 )
 
-type BankoPlade [3][9]uint8
-type BankoPlader []BankoPlade
-
-const bankoPladeSize = 82
-const ASCII0 = 48
-const BANKOROWS = 3
-const BANKOCOLS = 9
-
-func parseBankoPladeFormat() BankoPlader {
-	f := os.Stdin
-
-	var plader BankoPlader
-	plade_b := make([]byte, bankoPladeSize)
-
-	p := 0
-
-	for {
-		read, err := f.Read(plade_b)
-		if err != nil && read != bankoPladeSize {
-			break
-		}
-		if plade_b[bankoPladeSize-2] != byte('\n') || plade_b[bankoPladeSize-1] != byte('\n') {
-			log.Fatal("Slet format: Plade #", p, "mangler afsluttende linjeskift!")
-		}
-		var plade BankoPlade
-		plade = [3][9]uint8{
-			[9]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0},
-			[9]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0},
-			[9]uint8{0, 0, 0, 0, 0, 0, 0, 0, 0},
-		}
-		plade_s := bytes.Split(plade_b, []byte("\n"))
-		for y, l := range plade_s {
-			if y >= BANKOROWS {
-				break
-			}
-			line_s := bytes.Split(l, []byte(" "))
-			for x, b := range line_s {
-				plade[y][x] = (b[0]-ASCII0)*10 + (b[1] - ASCII0)
-			}
-		}
-		plader = append(plader, plade)
-		p++
-	}
-
-	return plader
-}
-
 func main() {
-	plader := parseBankoPladeFormat()
+	plader := banko.ParseBankoPladeFormat("")
 
 	out := bytes.NewBufferString("")
 	t, err := template.New("html").Parse(`<!doctype html>
@@ -99,7 +53,7 @@ body {
 		log.Fatal(err)
 	}
 	err = t.Execute(out, struct {
-		Plader BankoPlader
+		Plader banko.BankoPlader
 	}{
 		plader,
 	})
