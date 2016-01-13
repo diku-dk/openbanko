@@ -4,7 +4,7 @@ use std::env;
 //use std::io::Error;
 use std::io::prelude::*;
 //use std::ops::{Index};
-use std::mem;
+use std::ptr;
 
 extern crate rustbox;
 
@@ -242,7 +242,7 @@ struct BankoMemory {
 impl BankoMemory {
 	fn init(path: &str) -> BankoMemory {
 		BankoMemory {
-			mmap: Mmap::open_path(path, Protection::Read).unwrap(),
+			mmap: Mmap::open_path(path, Protection::ReadWrite).unwrap(),
 		}
 	}
 	
@@ -306,10 +306,12 @@ impl BankoMemory {
 	fn swap(&self, a: usize, b: usize) {
 		// TODO: Tjek faktisk om a og b ikke går itu når de
 		// skal de laves om til isize.
-		let ptr = self.mmap.ptr() as *const [u8; 82];
-		let mut bytes_a = unsafe { *ptr.offset(a as isize) };
-		let mut bytes_b = unsafe { *ptr.offset(b as isize) };
-		mem::swap(&mut bytes_a, &mut bytes_b);
+		let p = self.mmap.ptr() as *mut [u8; 82];
+		unsafe {
+			let p_a = p.offset(a as isize);
+			let p_b = p.offset(b as isize);
+			ptr::swap(p_a, p_b);
+		}
 	}
 	
 	fn save(&mut self) {
