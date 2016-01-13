@@ -9,10 +9,9 @@ import (
 )
 
 func main() {
-	plader := banko.ParseBankoPladeFormat("")
+	reader := banko.NewBankoPladeReader()
 
-	out := bytes.NewBufferString("")
-	t, err := template.New("html").Parse(`<!doctype html>
+	os.Stdout.Write([]byte(`<!doctype html>
 <html>
 <head>
 <style>
@@ -39,28 +38,32 @@ body {
 }
 </style>
 </head>
-<body>
-{{range $i, $e := .Plader}}<div class="plade">
-<header>#{{$i}}</header>
+<body>`))
+	rowt, err := template.New("row").Parse(`<div class="plade">
+<header>#{{.Num}}</header>
 <table>
-{{range $l := $e}}<tr>{{range $f := $l}}<td{{if eq $f 0}} class="empty"{{end}}>{{if gt $f 0}}{{$f}}{{end}}</td>{{end}}</tr>{{end}}
+{{range $l := .Plade}}<tr>{{range $f := $l}}<td{{if eq $f 0}} class="empty"{{end}}>{{if gt $f 0}}{{$f}}{{end}}</td>{{end}}</tr>{{end}}
 </table>
 </div>
-{{end}}
-</body>
-</html>`)
+`)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = t.Execute(out, struct {
-		Plader banko.BankoPlader
-	}{
-		plader,
-	})
-	if err != nil {
-		log.Fatal(err)
+	for reader.Next() {
+		html := bytes.NewBufferString("")
+		err := rowt.Execute(html, struct {
+			Plade banko.BankoPlade
+			Num   int
+		}{
+			reader.Value(),
+			reader.RecordNo(),
+		})
+		if err != nil {
+			continue
+		}
+		os.Stdout.Write(html.Bytes())
 	}
-
-	os.Stdout.Write(out.Bytes())
+	os.Stdout.Write([]byte(`</body>
+</html>`))
 }
 
