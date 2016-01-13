@@ -1,20 +1,26 @@
 use std::env;
-use std::fs::{File, OpenOptions};
-use std::io;
-use std::io::Error;
+//use std::fs::{File, OpenOptions};
+//use std::io;
+//use std::io::Error;
 use std::io::prelude::*;
+//use std::ops::{Index};
+use std::mem;
 
 extern crate rustbox;
 
 use rustbox::{Color, RustBox};
 use rustbox::Key;
 
+extern crate memmap;
+
+use memmap::{Mmap, Protection};
+
 static BANKOCOLS: usize = 9;
 static BANKOROWS: usize = 3;
+static BANKOPLADESIZE: usize = 82;
 
 #[derive(Clone, Copy, PartialEq)]
 enum Mode {
-	Loading,
 	Normal,
 	Moving,
 }
@@ -34,7 +40,7 @@ impl Video {
 		
 		let v = Video {
 			rustbox: rustbox,
-			mode: Mode::Loading,
+			mode: Mode::Normal,
 			bigskip: 0,
 		};
 		
@@ -50,18 +56,6 @@ impl Video {
 	
 	fn start_load(&self) {
 		self.bottom_status("Åbner filen...");
-	}
-	
-	fn inc_progressbar(&self, p: u64, size: u64, prevprog: u64) -> u64 {
-		let width = self.rustbox.width() as f64 - 6.0;
-		let prog = ((p as f64/size as f64) * 100.0) as u64;
-		let newprog = ((p as f64/size as f64) * width) as u64;
-		if newprog > prevprog {
-			self.rustbox.print(1, self.rustbox.height()-1, rustbox::RB_NORMAL, Color::Default, Color::Default, &(0..newprog).map(|_| "#").collect::<String>());
-			self.rustbox.print(self.rustbox.width() - 5, self.rustbox.height()-1, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!("{}%", prog));
-			self.rustbox.present();
-		}
-		newprog
 	}
 	
 	fn load_complete(&mut self, bigskip: usize) {
@@ -93,7 +87,6 @@ impl Video {
 		match self.mode {
 			Mode::Normal => self.rustbox.print(x2+13, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Skift"),
 			Mode::Moving => self.rustbox.print(x2+13, 3, rustbox::RB_NORMAL, Color::Default, Color::Default, ": Flyt "),
-			_ => {},
 		}
 		
 		let text3 = "Op/Ned";
@@ -105,7 +98,6 @@ impl Video {
 		match self.mode {
 			Mode::Normal => self.rustbox.print(x3+6, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!(": Skift {} felter", self.bigskip)),
 			Mode::Moving => self.rustbox.print(x3+6, 4, rustbox::RB_NORMAL, Color::Default, Color::Default, &format!(": Flyt  {} felter", self.bigskip)),
-			_ => {},
 		}
 		self.rustbox.present();
 	}
@@ -243,47 +235,26 @@ impl Video {
 	}
 }
 
-fn save_plader(filename: &str, plader: &Vec<[[u8; 9]; 3]>) -> Result<usize, io::Error> {
-	let mut f = try!(OpenOptions::new().write(true).open(filename));
-	
-	for plade in plader {
-		for row in 0..BANKOROWS {
-			for col in 0..BANKOCOLS {
-				if col + 1 == BANKOCOLS {
-					try!(write!(f, "{:02}", plade[row][col]));
-				} else {
-					try!(write!(f, "{:02} ", plade[row][col]));
-				}
-			}
-			try!(f.write(b"\n"));
-		}
-		try!(f.write(b"\n"));
-	}
-	
-	try!(f.flush());
-	
-	Ok(plader.len() as usize)
+struct BankoMemory {
+	mmap: Mmap,
 }
 
-fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u8; 9]; 3]> {
-	let mut plader: Vec<[[u8; 9]; 3]> = Vec::new();
+impl BankoMemory {
+	fn init(path: &str) -> BankoMemory {
+		BankoMemory {
+			mmap: Mmap::open_path(path, Protection::Read).unwrap(),
+		}
+	}
 	
-	let f = match File::open(&filename) {
-		Ok(val) => val,
-		Err(_) => panic!("Den fil kan jeg altså ikke åbne, Preben."),
-	};
+	fn len(&self) -> usize {
+		self.mmap.len() / BANKOPLADESIZE
+	}
 	
-	/*let mut buffer = String::new();
-	
-	match f.read_to_string(&mut buffer) {
-		Ok(_) => {},
-		Err(_) => panic!("Det er sgu' da ikke til at læse..."),
-	}*/
-	
-	let size = match f.metadata() {
-		Ok(m) => m.len(),
-		Err(_) => 1000,
-	};
+	fn get_plade(&self, no: usize) -> [[u8; 9]; 3] {
+		let ptr = self.mmap.ptr() as *const [u8; 82];
+		let bytes = unsafe { *ptr.offset(no as isize) };
+		//let bytes: [u8; BANKOPLADESIZE];
+		//*bytes = start;
 	
 	let mut plade: [[u8; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
 	                               [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -291,55 +262,69 @@ fn parse_bankopladeformat(filename: &str, v: &Video) -> Vec<[[u8; 9]; 3]> {
 	let mut row = 0;
 	let mut col = 0;
 	let mut current_field: i8 = -1;
-	let mut cn = 0;
-	let mut p = 0;
 	
-	v.bottom_status("Indlæser bankopladefilen...");
-	
-	for byte in f.bytes() {
-		let c = byte.unwrap() as char;
-		if col >= BANKOCOLS {
-			panic!("Slet format: For mange felter! ({})", c);
-		}
-		if row > BANKOROWS {
-			panic!("Slet format: For mange rækker! ({})", c);
-		}
-		if c == '\n' {
-			if current_field >= 0 {
+		for byte in bytes.iter() {
+			let c = *byte as char;
+			if col >= BANKOCOLS {
+				panic!("Slet format: For mange felter! ({})", c);
+			}
+			if row > BANKOROWS {
+				panic!("Slet format: For mange rækker! ({})", c);
+			}
+			if c == '\n' {
+				if current_field >= 0 {
+					plade[row][col] = current_field as u8;
+					current_field = -1;
+					col = 0;
+					row += 1;
+				} else {
+					row = 0;
+				}
+			} else if c == ' ' {
 				plade[row][col] = current_field as u8;
 				current_field = -1;
-				col = 0;
-				row += 1;
+				col += 1;
 			} else {
-				plader.push(plade);
-				plade = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
-				         [0, 0, 0, 0, 0, 0, 0, 0, 0],
-				         [0, 0, 0, 0, 0, 0, 0, 0, 0]];
-				row = 0;
+				if current_field == -1 {
+					current_field = match c.to_digit(10) {
+						Some(val) => val as i8 * 10,
+						None      => 0,
+					};
+				} else {
+					current_field += match c.to_digit(10) {
+						Some(val) => val as i8,
+						None      => 0,
+					};
+				}
 			}
-		} else if c == ' ' {
-			plade[row][col] = current_field as u8;
-			current_field = -1;
-			col += 1;
-		} else {
-			if current_field == -1 {
-				current_field = match c.to_digit(10) {
-					Some(val) => val as i8 * 10,
-					None      => 0,
-				};
-			} else {
-				current_field += match c.to_digit(10) {
-					Some(val) => val as i8,
-					None      => 0,
-				};
-			}
+			//p = v.inc_progressbar(cn, size, p);
 		}
-		cn += 1;
-		p = v.inc_progressbar(cn, size, p);
+		
+		plade
 	}
 	
-	plader
+	fn swap(&self, a: usize, b: usize) {
+		// TODO: Tjek faktisk om a og b ikke går itu når de
+		// skal de laves om til isize.
+		let ptr = self.mmap.ptr() as *const [u8; 82];
+		let mut bytes_a = unsafe { *ptr.offset(a as isize) };
+		let mut bytes_b = unsafe { *ptr.offset(b as isize) };
+		mem::swap(&mut bytes_a, &mut bytes_b);
+	}
+	
+	fn save(&mut self) {
+		self.mmap.flush().unwrap()
+	}
 }
+
+/*
+impl Index<usize> for BankoMemory {
+	type Output = [[u8; 9]; 3];
+	
+	fn index(&self, pos: usize) -> &[[u8; 9]; 3] {
+		&self.get_plade(pos as isize)
+	}
+}*/
 
 fn main() {
 	let filename = match env::args().nth(1) {
@@ -347,9 +332,11 @@ fn main() {
 		None      => panic!("Du glemte vist at angive en fil, dit kvaj!"),
 	};
 	
+	let mut plader = BankoMemory::init(&filename);
+	
 	let mut v = Video::init();
 	
-	let mut plader = parse_bankopladeformat(&filename, &v);
+	//let mut plader = parse_bankopladeformat(&filename, &v);
 	
 	let total = plader.len();
 	let bigskip = if total/100 < 10 { 10 } else { total/100 };
@@ -361,12 +348,12 @@ fn main() {
 	let mut till_clear = 0;
 	
 	'main: loop {
-		v.draw_plade(current, plader.len(), plader[current]);
+		v.draw_plade(current, plader.len(), plader.get_plade(current));
 		if current > 0 {
-			v.draw_previous_plade(plader[current-1]);
+			v.draw_previous_plade(plader.get_plade(current-1));
 		}
 		if current + 1 < plader.len() {
-			v.draw_next_plade(plader[current+1]);
+			v.draw_next_plade(plader.get_plade(current+1));
 		}
 		if till_clear > 1 {
 			till_clear -= 1;
@@ -383,20 +370,13 @@ fn main() {
 					Some(Key::Char('g')) => {
 						v.clear_status();
 						till_clear = 5;
-						match save_plader(&filename, &plader) {
-							Ok(_) => {
-								v.display_status("Gemt!");
-							},
-							Err(e) => {
-								v.display_status(&format!("En fejl! {}", e));
-							},
-						}
+						plader.save();
+						v.display_status("Gemt!");
 					},
 					Some(Key::Char('f')) => {
 						mode = match mode { 
 							Mode::Normal => Mode::Moving,
 							Mode::Moving => Mode::Normal,
-							Mode::Loading => Mode::Normal,
 						};
 						v.set_mode(mode);
 					},
