@@ -21,6 +21,7 @@ before_install:
   - sudo apt-get -y install cabal-install-1.24 ghc-7.10.3
   - export PATH=/opt/ghc/7.10.3/bin:/opt/cabal/1.24/bin:$HOME/.cabal/bin:$PATH
   - cabal update
+  - (cd barc; cabal install --only-dependencies)
 
   # Go
   - sudo apt-get -y install golang
@@ -28,9 +29,9 @@ before_install:
 install:
   - (cd bankopladeformat; make)
   - (cd bankopak; make)
-  - (cd bankoviser; cargo build)
+  - (cd bankoviser; make)
   - (cd bankoconv; make)
-  - (cd barc; cabal install --only-dependencies && cabal configure && cabal build)
+  - (cd barc; make)
 
 script:
   - (cd bankopak; make test)

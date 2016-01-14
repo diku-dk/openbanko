@@ -1,7 +1,4 @@
-.PHONY: clean
-
-#CC=cc
-#CFLAGS=-O2 -std=c99 -Wall -Wextra -pedantic -Wno-unused-function -Wno-self-assign -I../
+.PHONY: clean bankopladeformat2html bankopladeformat2tex
 
 all: bankopladeformat2html bankopladeformat2tex
 
@@ -12,5 +9,5 @@ bankopladeformat2tex: bankopladeformat2tex.go
 	GOPATH=`pwd` go build bankopladeformat2tex.go
 
 clean:
-	rm bankopladeformat2html
-	rm bankopladeformat2tex
+	rm -f bankopladeformat2html
+	rm -f bankopladeformat2tex
