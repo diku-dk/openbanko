@@ -12,7 +12,9 @@ genFuthark (Prog w h e) =
   T.concat [ "fun bool board_is_okay("
            , board_t
            , " board) =\n"
-           , futLet "vs" (futReshape [len] "board") (codeBoolExp e)
+           , futLet "vs"
+             (futCall "map" ["i32", futReshape [len] "board"])
+             (codeBoolExp e)
            , ""
            , "fun [bool, n] main(["
            , board_t
@@ -25,7 +27,7 @@ genFuthark (Prog w h e) =
     where w' = T.pack $ show w
           h' = T.pack $ show h
           len = T.pack $ show (w * h)
-          board_t = T.concat [ "[[i32, "
+          board_t = T.concat [ "[[i8, "
                              , w'
                              , "], "
                              , h'
