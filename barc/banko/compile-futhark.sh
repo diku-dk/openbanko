@@ -12,5 +12,3 @@ cd "$(dirname "$0")"
 ../dist/build/barc/barc --gotta-go-fast banko.barc > check-futhark.fut
 
 "$compiler" check-futhark.fut
-
-gcc -O3 -o check-futhark check-futhark.c
