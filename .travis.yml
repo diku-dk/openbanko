@@ -11,7 +11,8 @@ cache:
 before_install:
   # Rust
   - if [ ! -d multirust ]; then (git clone --recursive --depth 1 https://github.com/brson/multirust; cd multirust; git submodule update --init; ./build.sh); fi
-  - (cd multirust; ls; sudo ./install.sh)
+  - ls multirust
+  - sudo ./multirust/install.sh
   - multirust default 1.5.0
   - rustc --version
 
