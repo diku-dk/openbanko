@@ -10,10 +10,10 @@ cache:
 
 before_install:
   # Rust
-  - if [ ! -d multirust ]; then git clone --recursive --depth 1 https://github.com/brson/multirust; cd multirust; git submodule update --init; ./build.sh; fi
-  - (cd multirust; sudo ./install.sh)
-  - multirust default 1.5.0
-  - rustc --version
+  # - if [ ! -d multirust ]; then git clone --recursive --depth 1 https://github.com/brson/multirust; cd multirust; git submodule update --init; ./build.sh; fi
+  # - (cd multirust; sudo ./install.sh)
+  # - multirust default 1.5.0
+  # - rustc --version
 
   # Haskell
   - sudo add-apt-repository -y ppa:hvr/ghc
@@ -29,7 +29,7 @@ before_install:
 install:
   - (cd bankopladeformat; make)
   - (cd bankopak; make)
-  - (cd bankoviser; make)
+  # - (cd bankoviser; make)
   - (cd bankoconv; make)
   - (cd barc; make)
 
