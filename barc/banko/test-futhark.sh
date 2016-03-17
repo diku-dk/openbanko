@@ -11,5 +11,5 @@ cat tests/plade-rigtig-0.bankopladeformat \
     tests/plade-forkert-1.bankopladeformat \
     tests/plade-forkert-2.bankopladeformat | \
     ./bankopladeformat_to_futhark_input.py | \
-    ./check | \
+    ./check-futhark | \
     cmp - <(echo "$expected")

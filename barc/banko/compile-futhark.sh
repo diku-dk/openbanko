@@ -9,8 +9,8 @@ fi
 set -e
 cd "$(dirname "$0")"
 
-../dist/build/barc/barc --gotta-go-fast banko.barc > check.fut
+../dist/build/barc/barc --gotta-go-fast banko.barc > check-futhark.fut
 
-"$compiler" check.fut
+"$compiler" check-futhark.fut
 
-gcc -O3 -o check check.c
+gcc -O3 -o check-futhark check-futhark.c

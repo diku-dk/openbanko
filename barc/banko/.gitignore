@@ -1,3 +1,5 @@
 /check.c
-/check.fut
 /check
+/check-futhark.fut
+/check-futhark.c
+/check-futhark
