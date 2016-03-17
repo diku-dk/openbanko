@@ -11,6 +11,7 @@ genCode (Prog w h e) =
   T.concat [ "#include <stdlib.h>\n"
            , "#include <stdio.h>\n"
            , "#include <stdint.h>\n"
+           , "#include <assert.h>\n"
            , "\n"
            , "int board_is_okay(int vs["
            , len
@@ -31,9 +32,9 @@ genCode (Prog w h e) =
            ]
   where len = T.pack $ show (w * h)
         scanfs = T.concat $
-                 map (\i -> T.concat [ "scanf(\"%d\", &vs["
+                 map (\i -> T.concat [ "assert(1 == scanf(\"%d\", &vs["
                                      , T.pack (show i)
-                                     , "]);\n"
+                                     , "]));\n"
                                      ])
                  [0..w * h - 1]
 
