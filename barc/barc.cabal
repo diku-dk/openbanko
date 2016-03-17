@@ -37,8 +37,11 @@ Library
                    Barc.ExpInner
                    Barc.Unroller
                    Barc.ExpUnrolled
+                   Barc.Bitter
+                   Barc.ExpBit
                    Barc.ConstantFolder
                    Barc.CCodeGen
+                   Barc.CCodeGenBit
                    Barc.FutharkGen
 
   Default-Language:   Haskell2010

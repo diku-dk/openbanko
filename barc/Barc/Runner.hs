@@ -1,9 +1,12 @@
-module Barc.Runner (runStringFuthark, runFromFile, runFromFileFuthark) where
+module Barc.Runner (runString, runStringBit, runStringFuthark,
+                    runFromFile, runFromFileBit, runFromFileFuthark) where
 
 import Barc.Parser (parseString)
 import Barc.Simplifier (simplify)
 import Barc.Unroller (unroll)
+import Barc.Bitter (bit)
 import Barc.CCodeGen (genCode)
+import Barc.CCodeGenBit (genCodeBit)
 import Barc.FutharkGen (genFuthark)
 
 import Control.Applicative
@@ -20,6 +23,15 @@ runString s = case parseString s of
       Left err -> Left ("unroll error: " ++ err)
       Right p2 -> Right $ genCode p2
 
+runStringBit :: String -> Either String T.Text
+runStringBit s = case parseString s of
+  Left err -> Left ("parse error: " ++ show err)
+  Right p0 -> case simplify p0 of
+    Left err -> Left ("simplify error: " ++ err)
+    Right p1 -> case unroll p1 of
+      Left err -> Left ("unroll error: " ++ err)
+      Right p2 -> Right $ genCodeBit (bit p2)
+
 runStringFuthark :: String -> Either String T.Text
 runStringFuthark s = case parseString s of
   Left err -> Left ("parse error: " ++ show err)
@@ -27,6 +39,9 @@ runStringFuthark s = case parseString s of
 
 runFromFile :: FilePath -> IO (Either String T.Text)
 runFromFile path = runString <$> readFile path
+
+runFromFileBit :: FilePath -> IO (Either String T.Text)
+runFromFileBit path = runStringBit <$> readFile path
 
 runFromFileFuthark :: FilePath -> IO (Either String T.Text)
 runFromFileFuthark path = runStringFuthark <$> readFile path
