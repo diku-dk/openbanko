@@ -6,15 +6,13 @@ import Barc.ExpUnrolled
 import qualified Data.Text as T
 
 
--- int8_t hardcoded for now
-
 genCode :: Prog -> T.Text
 genCode (Prog w h e) =
   T.concat [ "#include <stdlib.h>\n"
            , "#include <stdio.h>\n"
            , "#include <stdint.h>\n"
            , "\n"
-           , "int board_is_okay(int8_t vs["
+           , "int board_is_okay(int vs["
            , len
            , "]) {\n"
            , "return ("
@@ -23,7 +21,7 @@ genCode (Prog w h e) =
            , "}"
            , "\n"
            , "int main() {\n"
-           , "int8_t vs["
+           , "int vs["
            , len
            , "];\n"
            , scanfs
@@ -33,7 +31,7 @@ genCode (Prog w h e) =
            ]
   where len = T.pack $ show (w * h)
         scanfs = T.concat $
-                 map (\i -> T.concat [ "scanf(\"%hhd\", &vs["
+                 map (\i -> T.concat [ "scanf(\"%d\", &vs["
                                      , T.pack (show i)
                                      , "]);\n"
                                      ])
