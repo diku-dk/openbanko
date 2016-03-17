@@ -1,167 +1,188 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Barc.FutharkGen (genFuthark) where
 
-import Control.Applicative hiding (Const)
-import Control.Monad.Reader
 import Data.List
-
+import qualified Data.Text as T
 import Prelude
 
-import Barc.ExpOuter
+import Barc.ExpInner
 
-data Env = Env { envWidth :: Int
-               , envHeight :: Int
-               }
+genFuthark :: Prog -> T.Text
+genFuthark (Prog w h e) = 
+  T.concat [ "fun bool board_is_okay("
+           , board_t
+           , " board) =\n"
+           , futLet "vs" (futReshape [len] "board") (codeBoolExp e)
+           , ""
+           , "fun [bool, n] main(["
+           , board_t
+           , ", n] boards) =\n"
+           , "map(board_is_okay, boards)\n"
+           , ""
+           , "fun bool toBool(i32 x) = ! (x == 0)\n"
+           , "fun i32 fromBool(bool x) = if x then 1 else 0\n"
+           ]
+    where w' = T.pack $ show w
+          h' = T.pack $ show h
+          len = T.pack $ show (w * h)
+          board_t = T.concat [ "[[i32, "
+                             , w'
+                             , "], "
+                             , h'
+                             , "]"
+                             ]
 
-type GenM = ReaderT Env (Either String)
+codeBoolExp :: ExpBool -> T.Text
+codeBoolExp e = T.append (codeBoolExp' e) "\n"
 
-genFuthark :: Prog -> Either String String
-genFuthark (Prog w h e) = do
-  e' <- runReaderT (toBool <$> codeExp e) $ Env w h
-  return $
-    unlines [ "fun bool board_is_okay(" ++ board_t ++ " board) ="
-            , futLet "xs" (futMap ("%"++show w) $ futIota $ show $ w*h) $
-              futLet "ys" (futMap ("//"++show w) $ futIota $ show $ w*h) $
-              futLet "vs" (futReshape [show $ w*h] "board")
-              e'
-            , ""
-            , "fun [bool] main([" ++ board_t ++ ",n] boards) ="
-            , "  map(board_is_okay, boards)"
-            , ""
-            , "fun bool toBool(int x) = !(x == 0)"
-            , "fun int fromBool(bool x) = if x then 1 else 0"
-            ]
-    where w' = show w
-          h' = show h
-          board_t = "[[int," ++ w' ++ "], " ++ h' ++ "]"
+codeBoolExp' :: ExpBool -> T.Text
+codeBoolExp' e = case e of
+  BoolVal b -> if b then "True" else "False"
+  IndexBool bs i -> futIndex (codeBoolListExp bs) (codeIntExp i)
+  BoolConv e' -> futCall "toBool" [codeIntExp e']
+  ReduceBool ident neutral list body ->
+    futReduce "bool" ident (codeBoolExp neutral)
+    (codeBoolListExp list) (codeBoolExp body)
+  ReduceBoolValueFirst ident -> reduceValueFirst ident
+  ReduceBoolValueSecond ident -> reduceValueSecond ident
+  And e0 e1 -> futBinOp "&&" (codeBoolExp e0) (codeBoolExp e1)
+  Or e0 e1 -> futBinOp "||" (codeBoolExp e0) (codeBoolExp e1)
+  Not e' -> futUnOp "!" (codeBoolExp e')
+  Eq e0 e1 -> futBinOp "==" (codeIntExp e0) (codeIntExp e1)
+  Gt e0 e1 -> futBinOp ">" (codeIntExp e0) (codeIntExp e1)
 
-codeExp :: Exp -> GenM String
-codeExp BoardXs = return "xs"
-codeExp BoardYs = return "ys"
-codeExp BoardValues = return "vs"
-codeExp BoardWidth = show <$> asks envWidth
-codeExp BoardHeight = show <$> asks envHeight
-codeExp (Const x) = return $ show x
-codeExp (BoolVal b) = return (if b then "True" else "False")
-codeExp (Var v) = return v
+codeIntExp :: ExpInt -> T.Text
+codeIntExp e = T.append (codeIntExp' e) "\n"
 
-codeExp (Let v e body) =
-  futLet v <$> codeExp e <*> codeExp body
+codeIntExp' :: ExpInt -> T.Text
+codeIntExp' e = case e of
+  Const n -> T.pack $ show n
+  IndexInt ns i -> futIndex (codeIntListExp ns) (codeIntExp i)
+  CurrentIndex ident -> currentIndex ident
+  LengthInt ns -> futLength $ codeIntListExp ns
+  LengthBool bs -> futLength $ codeBoolListExp bs
+  IntConv e' -> futCall "fromBool" [codeBoolExp e']
+  ReduceInt ident neutral list body ->
+    futReduce "i32" ident (codeIntExp neutral)
+    (codeIntListExp list) (codeIntExp body)
+  ReduceIntValueFirst ident -> reduceValueFirst ident
+  ReduceIntValueSecond ident -> reduceValueSecond ident
+  Add e0 e1 -> futBinOp "+" (codeIntExp e0) (codeIntExp e1)
+  Subtract e0 e1 -> futBinOp "-" (codeIntExp e0) (codeIntExp e1)
+  Multiply e0 e1 -> futBinOp "*" (codeIntExp e0) (codeIntExp e1)
+  Modulo e0 e1 -> futBinOp "%" (codeIntExp e0) (codeIntExp e1)
 
-codeExp (List es) =
-  brackets . commaSep <$> mapM codeExp es
+codeBoolListExp :: ExpBoolList -> T.Text
+codeBoolListExp e = T.append (codeBoolListExp' e) "\n"
 
-codeExp (Index a i) =
-  futLet "tmp_arr" <$> codeExp a <*>
-    (("tmp_arr"++) . brackets <$> codeExp i)
+codeBoolListExp' :: ExpBoolList -> T.Text
+codeBoolListExp' e = case e of
+  ListBool bs -> brackets $ commaSep $ map codeBoolExp bs
+  MapBool ident len body ->
+    futMap "bool" ident (codeIntExp len) (codeBoolExp body)
 
--- Now comes the ugly one.
-codeExp (Length e) =
-  futLet "tmp_arr" <$> codeExp e <*> pure "size(tmp_arr, 0)"
+codeIntListExp :: ExpIntList -> T.Text
+codeIntListExp e = T.append (codeIntListExp' e) "\n"
 
-codeExp (IntConv e) = fromBool <$> codeExp e  
+codeIntListExp' :: ExpIntList -> T.Text
+codeIntListExp' e = case e of
+  BoardValues -> "vs"
+  ListInt ns -> brackets $ commaSep $ map codeIntExp ns
+  MapInt ident len body ->
+    futMap "i32" ident (codeIntExp len) (codeIntExp body)
 
-codeExp (BoolConv e) = toBool <$> codeExp e  
+futReduce :: T.Text -> Int -> T.Text -> T.Text -> T.Text -> T.Text
+futReduce baseType ident neutral list body =
+  futCall "reduce" [fun, neutral, list]
+  where fun = T.concat [ "fn "
+                       , baseType
+                       , " "
+                       , parens $ commaSep args
+                       , " => "
+                       , body
+                       ]
+        args = [ T.concat [ baseType
+                          , " "
+                          , reduceValueFirst ident
+                          ]
+               , T.concat [ baseType
+                          , " "
+                          , reduceValueSecond ident
+                          ]
+               ]
 
-codeExp (Seq start n) = do
-  start' <- codeExp start
-  futMap ("+" ++ parens start') . futIota <$> codeExp n
+reduceValueFirst :: Int -> T.Text
+reduceValueFirst ident = T.concat [ "reduce_value_first_"
+                                  , T.pack $ show ident
+                                  ]
 
-codeExp (All e) =
-  fromBool . futReduce "&&" "True" . toBoolArray <$> codeExp e
+reduceValueSecond :: Int -> T.Text
+reduceValueSecond ident = T.concat [ "reduce_value_second_"
+                                   , T.pack $ show ident
+                                   ]
 
-codeExp (Any e) =
-  fromBool . futReduce "||" "False" . toBoolArray <$> codeExp e
+futMap :: T.Text -> Int -> T.Text -> T.Text -> T.Text
+futMap baseType ident len body =
+  futCall "map" [fun, list]
+  where fun = T.concat [ "fn "
+                       , baseType
+                       , " "
+                       , parens arg
+                       , " => "
+                       , body
+                       ]
+        arg = T.concat [ "i32 "
+                       , currentIndex ident
+                       ]
+        list = futCall "iota" [len]
 
-codeExp (Sum e) =
-  futReduce "+" "0" <$> codeExp e
+currentIndex :: Int -> T.Text
+currentIndex ident = T.concat [ "current_index_"
+                              , T.pack $ show ident
+                              ]
 
-codeExp (Product e) =
-  futReduce "*" "1" <$> codeExp e
+futIndex :: T.Text -> T.Text -> T.Text
+futIndex xs i = T.concat [ parens xs
+                         , brackets i
+                         ]
 
-codeExp (Map fun e) =
-  futMap <$> codeFun fun <*> codeExp e
+futCall :: T.Text -> [T.Text] -> T.Text
+futCall name args = T.concat [ name
+                             , parens $ commaSep args
+                             ]
 
-codeExp (Reduce fun ne a) =
-  futReduce <$> codeFun fun <*> codeExp ne <*> codeExp a
+futLength :: T.Text -> T.Text
+futLength xs = futCall "size" ["0", xs]
 
-codeExp (Or e1 e2) =
-  fromBool <$> (futBinOp "||" <$> (toBool <$> codeExp e1) <*> (toBool <$> codeExp e2))
+futBinOp :: T.Text -> T.Text -> T.Text -> T.Text
+futBinOp op x y = parens $ T.concat [x, op, y]
 
-codeExp (And e1 e2) =
-  fromBool <$> (futBinOp "&&" <$> (toBool <$> codeExp e1) <*> (toBool <$> codeExp e2))
+futUnOp :: T.Text -> T.Text -> T.Text
+futUnOp op x = parens $ T.concat [op, x]
 
-codeExp (Not e) =
-  fromBool . ("!"++) . parens . toBool <$> codeExp e
+futLet :: T.Text -> T.Text -> T.Text -> T.Text
+futLet v e body = T.concat [ "let "
+                           , v
+                           , " = "
+                           , e
+                           , " in\n"
+                           , body
+                           ]
 
-codeExp (Add e1 e2) =
-  futBinOp "+" <$> codeExp e1 <*> codeExp e2
+futReshape :: [T.Text] -> T.Text -> T.Text
+futReshape shape e = futCall "reshape" [parens (commaSep shape), e]
 
-codeExp (Subtract e1 e2) =
-  futBinOp "-" <$> codeExp e1 <*> codeExp e2
+parens :: T.Text -> T.Text
+parens t = T.concat [ "("
+                    , t
+                    , ")"
+                    ]
 
-codeExp (Multiply e1 e2) =
-  futBinOp "*" <$> codeExp e1 <*> codeExp e2
+brackets :: T.Text -> T.Text
+brackets t = T.concat [ "["
+                      , t
+                      , "]"
+                      ]
 
-codeExp (Modulo e1 e2) =
-  futBinOp "%" <$> codeExp e1 <*> codeExp e2
-
-codeExp (Eq e1 e2) =
-  fromBool <$> (futBinOp "==" <$> codeExp e1 <*> codeExp e2)
-
-codeExp (Gt e1 e2) =
-  fromBool <$> (futBinOp ">" <$> codeExp e1 <*> codeExp e2)
-
-codeExp (Lt e1 e2) =
-  fromBool <$> (futBinOp "<" <$> codeExp e1 <*> codeExp e2)
-
-codeExp (LtEq e1 e2) =
-  fromBool <$> (futBinOp "<=" <$> codeExp e1 <*> codeExp e2)
-
-codeExp (GtEq e1 e2) =
-  fromBool <$> (futBinOp ">=" <$> codeExp e1 <*> codeExp e2)
-
-codeFun :: Fun -> GenM String
-codeFun (Fun params body) = do
-  body' <- codeExp body
-  return $ "fn int (" ++ params' ++ ") => " ++ body'
-  where params' = commaSep $ map ("int " ++) params
-
--- Building blocks
-
-futReduce :: String -> String -> String -> String
-futReduce op ne a = "reduce" ++ parens (commaSep [op, ne, a])
-
-futMap :: String -> String -> String
-futMap fun a = "map" ++ parens (commaSep [fun, a])
-
-futIota :: String -> String
-futIota n = "iota" ++ parens n
-
-futReshape :: [String] -> String -> String
-futReshape shape e =
-  "reshape" ++ parens (commaSep [parens (commaSep shape), e])
-
-futBinOp :: String -> String -> String -> String
-futBinOp op x y = parens $ unwords [x, op, y]
-
-futLet :: String -> String -> String -> String
-futLet v e body = unlines [ unwords ["let", v , "=", e, "in"]
-                          , body]
-
-parens :: String -> String
-parens s = "(" ++ s ++ ")"
-
-brackets :: String -> String
-brackets s = "[" ++ s ++ "]"
-
-commaSep :: [String] -> String
-commaSep = intercalate ", "
-
-toBool :: String -> String
-toBool s = "toBool" ++ parens s
-
-fromBool :: String -> String
-fromBool s = "fromBool" ++ parens s
-
-toBoolArray :: String -> String
-toBoolArray = futMap "toBool"
+commaSep :: [T.Text] -> T.Text
+commaSep = T.intercalate ", "

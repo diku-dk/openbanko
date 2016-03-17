@@ -35,7 +35,9 @@ runStringBit s = case parseString s of
 runStringFuthark :: String -> Either String T.Text
 runStringFuthark s = case parseString s of
   Left err -> Left ("parse error: " ++ show err)
-  Right p0 -> T.pack <$> genFuthark p0
+  Right p0 -> case simplify p0 of
+    Left err -> Left ("simplify error: " ++ err)
+    Right p1 -> Right $ genFuthark p1
 
 runFromFile :: FilePath -> IO (Either String T.Text)
 runFromFile path = runString <$> readFile path
