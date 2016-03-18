@@ -42,6 +42,7 @@ Library
                    Barc.ConstantFolder
                    Barc.CCodeGen
                    Barc.CCodeGenBit
+                   Barc.FutharkUnrolledGen
                    Barc.FutharkGen
 
   Default-Language:   Haskell2010
