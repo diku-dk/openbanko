@@ -8,40 +8,32 @@ import Prelude
 import Barc.ExpInner
 
 genFuthark :: Prog -> T.Text
-genFuthark (Prog w h e) = 
-  T.concat [ "fun bool board_is_okay("
+genFuthark (Prog w h e) =
+  T.concat [ "let board_is_okay(board: "
            , board_t
-           , " board) =\n"
+           , "): bool =\n"
            , futLet "vs"
-             (futCall "map" ["i32", futReshape [len] "board"])
+             (futCall "map" ["i32.i8", futCall "flatten" ["board"]])
              (codeBoolExp e)
            , ""
-           , "fun [bool, n] main(["
+           , "let main [n] (boards: [n]"
            , board_t
-           , ", n] boards) =\n"
-           , "map(board_is_okay, boards)\n"
-           , ""
-           , "fun bool toBool(i32 x) = ! (x == 0)\n"
-           , "fun i32 fromBool(bool x) = if x then 1 else 0\n"
+           , "): [n]bool =\n"
+           , "  map board_is_okay boards\n"
            ]
     where w' = T.pack $ show w
           h' = T.pack $ show h
           len = T.pack $ show (w * h)
-          board_t = T.concat [ "[[i8, "
-                             , w'
-                             , "], "
-                             , h'
-                             , "]"
-                             ]
+          board_t = T.concat [ "[", h', "][", w', "]i8"]
 
 codeBoolExp :: ExpBool -> T.Text
 codeBoolExp e = T.append (codeBoolExp' e) "\n"
 
 codeBoolExp' :: ExpBool -> T.Text
 codeBoolExp' e = case e of
-  BoolVal b -> if b then "True" else "False"
+  BoolVal b -> if b then "true" else "false"
   IndexBool bs i -> futIndex (codeBoolListExp bs) (codeIntExp i)
-  BoolConv e' -> futCall "toBool" [codeIntExp e']
+  BoolConv e' -> futCall "i32.bool" [codeIntExp e']
   ReduceBool ident neutral list body ->
     futReduce "bool" ident (codeBoolExp neutral)
     (codeBoolListExp list) (codeBoolExp body)
@@ -63,7 +55,7 @@ codeIntExp' e = case e of
   CurrentIndex ident -> currentIndex ident
   LengthInt ns -> futLength $ codeIntListExp ns
   LengthBool bs -> futLength $ codeBoolListExp bs
-  IntConv e' -> futCall "fromBool" [codeBoolExp e']
+  IntConv e' -> futCall "i32.bool" [codeBoolExp e']
   ReduceInt ident neutral list body ->
     futReduce "i32" ident (codeIntExp neutral)
     (codeIntListExp list) (codeIntExp body)
@@ -96,20 +88,20 @@ codeIntListExp' e = case e of
 futReduce :: T.Text -> Int -> T.Text -> T.Text -> T.Text -> T.Text
 futReduce baseType ident neutral list body =
   futCall "reduce" [fun, neutral, list]
-  where fun = T.concat [ "fn "
+  where fun = T.concat [ "\\"
+                       , T.concat $ map parens args
+                       , ": "
                        , baseType
-                       , " "
-                       , parens $ commaSep args
-                       , " => "
+                       , " -> "
                        , body
                        ]
-        args = [ T.concat [ baseType
-                          , " "
-                          , reduceValueFirst ident
+        args = [ T.concat [ reduceValueFirst ident
+                          , ": "
+                          , baseType
                           ]
-               , T.concat [ baseType
-                          , " "
-                          , reduceValueSecond ident
+               , T.concat [ reduceValueSecond ident
+                          , ": "
+                          , baseType
                           ]
                ]
 
@@ -126,15 +118,15 @@ reduceValueSecond ident = T.concat [ "reduce_value_second_"
 futMap :: T.Text -> Int -> T.Text -> T.Text -> T.Text
 futMap baseType ident len body =
   futCall "map" [fun, list]
-  where fun = T.concat [ "fn "
-                       , baseType
-                       , " "
+  where fun = T.concat [ "\\"
                        , parens arg
-                       , " => "
+                       , ": "
+                       , baseType
+                       , " -> "
                        , body
                        ]
-        arg = T.concat [ "i32 "
-                       , currentIndex ident
+        arg = T.concat [ currentIndex ident
+                       , ": i32"
                        ]
         list = futCall "iota" [len]
 
@@ -149,12 +141,10 @@ futIndex xs i = T.concat [ parens xs
                          ]
 
 futCall :: T.Text -> [T.Text] -> T.Text
-futCall name args = T.concat [ name
-                             , parens $ commaSep args
-                             ]
+futCall name args = name <> mconcat (map parens args)
 
 futLength :: T.Text -> T.Text
-futLength xs = futCall "size" ["0", xs]
+futLength xs = futCall "length" [xs]
 
 futBinOp :: T.Text -> T.Text -> T.Text -> T.Text
 futBinOp op x y = parens $ T.concat [x, op, y]
@@ -170,9 +160,6 @@ futLet v e body = T.concat [ "let "
                            , " in\n"
                            , body
                            ]
-
-futReshape :: [T.Text] -> T.Text -> T.Text
-futReshape shape e = futCall "reshape" [parens (commaSep shape), e]
 
 parens :: T.Text -> T.Text
 parens t = T.concat [ "("
