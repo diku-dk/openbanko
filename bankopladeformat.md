@@ -1,5 +1,5 @@
-Bankopladeformat 2.0
-====================
+Bankopladeformat
+================
 
 BNF-notation
 ------------

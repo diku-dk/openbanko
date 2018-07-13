@@ -15,7 +15,7 @@ Tools and toys for Big Banko processing
 
 ## Bankopladeformat
 
-The specification for banko boards: [Bankopladeformat2.md](Bankopladeformat2.md)
+The specification for banko boards: [bankopladeformat.md](bankopladeformat.md)
 
 
 ## Citation
