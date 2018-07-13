@@ -1,21 +1,25 @@
-# banko
+# Big Banko: Scaling for the Next Generation
 
 Tools and toys for Big Banko processing
 
 [![Build Status](https://travis-ci.org/Athas/banko.svg?branch=master)](https://travis-ci.org/Athas/banko)
 
 
-## Utilities
-
-+ [bankopak](bankopak/README.md): Compress and decompress banko boards
-+ [bankoconv](bankoconv/README.md): Convert between banko formats
-+ [bankoviser](bankoviser/README.md): Interact with banko boards in the terminal
-+ [barc](barc/README.md): Check if boards are valid banko boards
-
-
 ## Bankopladeformat
 
-The specification for banko boards: [bankopladeformat.md](bankopladeformat.md)
+The specification for banko cards: [bankopladeformat.md](bankopladeformat.md)
+
+
+## Utilities
+
++ [bankoconv](bankoconv/README.md): Convert between banko formats
++ [bankopak](bankopak/README.md): Compress and decompress banko boards
++ [bankopladeformat](bankopladeformat/README.md): Perform miscellaneous
+  operations on banko cards in the bankopladeformat format
++ [bankoviser](bankoviser/README.md): Interact with banko boards in the terminal
++ [barc](barc/README.md): Check if boards are valid banko boards -- also
+  generalizes to other games through a DSL
++ [cbankosim](cbankosim/): Automatically simulate playing banko
 
 
 ## Citation
