@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Important: This program does not produce uniformly distributed banko cards.
+# Use with care!
+
 import random
 import sys
 
