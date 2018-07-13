@@ -15,13 +15,13 @@ before_install:
   # - multirust default 1.5.0
   # - rustc --version
 
-  # Haskell
-  - sudo add-apt-repository -y ppa:hvr/ghc
-  - sudo apt-get update
-  - sudo apt-get -y install cabal-install-1.24 ghc-7.10.3
-  - export PATH=/opt/ghc/7.10.3/bin:/opt/cabal/1.24/bin:$HOME/.cabal/bin:$PATH
-  - cabal update
-  - (cd barc; cabal install --only-dependencies)
+  # # Haskell
+  # - sudo add-apt-repository -y ppa:hvr/ghc
+  # - sudo apt-get update
+  # - sudo apt-get -y install cabal-install-1.24 ghc-7.10.3
+  # - export PATH=/opt/ghc/7.10.3/bin:/opt/cabal/1.24/bin:$HOME/.cabal/bin:$PATH
+  # - cabal update
+  # - (cd barc; cabal install --only-dependencies)
 
   # Go
   - sudo apt-get -y install golang
@@ -31,8 +31,8 @@ install:
   - (cd bankopak; make)
   # - (cd bankoviser; make)
   - (cd bankoconv; make)
-  - (cd barc; make)
+  # - (cd barc; make)
 
 script:
   - (cd bankopak; make test)
-  - (cd barc/banko; make test)
+  # - (cd barc/banko; make test)
