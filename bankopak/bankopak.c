@@ -75,4 +75,3 @@ int main(int argc, char** argv) {
     algorithms[decompress].decompressor(stdout, stdin);
   }
 }
-

@@ -14,7 +14,7 @@ static unsigned __int128 a4_arithmetic_encode
  size_t src_base
 )
 {
-  unsigned __int128 num = 0; /* gcc extension; good enough for now */ 
+  unsigned __int128 num = 0; /* gcc extension; good enough for now */
   unsigned __int128 base_cur = 1;
   for (size_t i = 0; i < src_len; i++) {
     num += src[i] * base_cur;
@@ -88,7 +88,7 @@ void a4_decompress(FILE *out, FILE *in) {
   uint8_t value_cur;
   uint8_t offset_column;
   uint8_t offset_prev;
-  
+
   while (1) {
     number_encoding = 0;
     fread((uint8_t*) &number_encoding, NECESSARY_BYTES, 1, in);
@@ -115,7 +115,7 @@ void a4_decompress(FILE *out, FILE *in) {
     }
 
     banko_writer_board(&writer, &board);
-    
+
     int c = fgetc(in);
     ungetc(c, in);
     if (c == EOF) {

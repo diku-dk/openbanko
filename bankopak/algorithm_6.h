@@ -183,7 +183,7 @@ void a6_compress(FILE *out, FILE *in) {
   a6_board_values_t board_values;
   a6_row_values_t row_values;
   uint64_t number_code;
-  
+
   while (banko_reader_board(&reader, &board) == 0) {
     a6_make_board_mask(&board_mask, board);
     a6_compress_board_mask(&board_mask_compressed, board_mask);
@@ -217,7 +217,7 @@ void a6_decompress(FILE *out, FILE *in) {
   a6_row_values_t row_values;
   a6_board_values_t board_values;
   uint64_t number_code;
-  
+
   int bit_temp;
   uint64_t mask_temp;
   while (1) {
