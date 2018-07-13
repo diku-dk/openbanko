@@ -1,11 +1,11 @@
-Bankoviser
+bankoviser
 ==========
 
-Bankoviser visualiserer en bankopladeformat-fil.  Man kan gå igennem
-bankopladerne og flytte rundt på dem og gemme den nye rækkefølge.
+Bankoviser visualises a bankopladeformat file.  You can traverse the
+banko cards, move them around, and save the new sequences.
 
-Brug
-----
+Use
+---
 
     $ ./bankoviser <fil.bankopladeformat>
 

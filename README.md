@@ -12,8 +12,6 @@ Tools and toys for Big Banko processing
 + [bankoviser](bankoviser/README.md): Interact with banko boards in the terminal
 + [barc](barc/README.md): Check if boards are valid banko boards
 
-Learning Danish is advised.
-
 
 ## Bankopladeformat
 

@@ -1,13 +1,13 @@
-Bankoconv
+bankoconv
 =========
 
-Kør `make` for at oversætte programmerne.
+Run `make` to compile the programs
 
 
 bankopladeformat2html
 ---------------------
 
-Konvertér dine bankoplader til en kæmpe HTML-fil.  Kør
+Convert your banko cards to one large HTML file.  Run
 
     $ ./bankopladeformat2html < sti/til/plader.bankopladeformat > plader.html
 
@@ -15,10 +15,10 @@ Konvertér dine bankoplader til en kæmpe HTML-fil.  Kør
 bankopladeformat2tex
 --------------------
 
-Konvertér dine bankoplader til en fin LaTeX-fil.  Kør
+Convert your banko cards to a pretty LaTeX file.  Run
 
     $ ./bankopladeformat2tex < sti/til/plader.bankopladeformat > plader.tex
 
-eller blot
+or just
 
     $ ./bankopladeformat2pdf < sti/til/plader.bankopladeformat > plader.pdf
