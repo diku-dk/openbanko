@@ -23,7 +23,6 @@ genFuthark (Prog w h e) =
            ]
     where w' = T.pack $ show w
           h' = T.pack $ show h
-          len = T.pack $ show (w * h)
           board_t = T.concat [ "[", h', "][", w', "]i8"]
 
 codeBoolExp :: ExpBool -> T.Text
