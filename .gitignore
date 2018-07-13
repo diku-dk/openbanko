@@ -1,5 +1,6 @@
 # Ignore stack junk.
 .stack-work
+stack.yaml
 
 # Ignore side-effects of compilation.
 *.prof

@@ -1,0 +1,28 @@
+name: barc
+version: "0.1.0"
+synopsis: A compiler for bingo-like games
+description: DSL and compiler in one
+homepage: https://github.com/Athas/banko
+maintainer: Niels G. W. Serup <ngws@metanohi.name>
+license: ISC
+github: Athas/banko
+category: Language
+
+ghc-options: -Wall
+
+dependencies:
+  - base >= 4 && < 5
+  - containers >= 0.5
+  - mtl >= 2.2.1
+  - parsec >= 3
+  - text
+  - safe >= 0.2
+
+library:
+  source-dirs: .
+
+executables:
+  futhark: &barc
+    main: barc.hs
+    dependencies:
+      - barc

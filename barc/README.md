@@ -4,7 +4,7 @@ BAnko Rule Checker
 
 Build with
 
-    $ cabal install
+    $ stack install
 
 Run with
 

@@ -1,65 +1,65 @@
-Name:                barc
-Version:             0.1
-Synopsis:            An optimising compiler for checking the validity of boards in e.g. banko.
-description:
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fc0718507dcd6e9ea5bd41a56b783d160077a0998aaa493e9c624f442efb47df
 
-        BARC (BAnko Rule Checker) is a board rule checker that can be used to
-        check the validity of boards in the game banko as well as closely
-        related games.  It is part of the Big Banko suite.
-
-Homepage:            https://github.com/Athas/banko
-Category:            Language
-License:             BSD3
-License-file:        ../LICENSE
-Build-type:          Simple
-Maintainer:          ngws@metanohi.name
-
--- Constraint on the version of Cabal needed to build this package.
-Cabal-version:       >=1.10
+name:           barc
+version:        0.1.0
+synopsis:       A compiler for bingo-like games
+description:    DSL and compiler in one
+category:       Language
+homepage:       https://github.com/Athas/banko
+bug-reports:    https://github.com/Athas/banko/issues
+maintainer:     Niels G. W. Serup <ngws@metanohi.name>
+license:        ISC
+build-type:     Simple
+cabal-version:  >= 1.10
 
 source-repository head
-  type:     git
-  location: git@github.com:Athas/banko.git
+  type: git
+  location: https://github.com/Athas/banko
 
-Library
-  -- Packages needed in order to build this package.
-  Build-depends: base >= 4 && < 5
-               , containers >= 0.5
-               , mtl >= 2.2.1
-               , parsec >= 3.0.0
-               , safe >= 0.2
-               , text >= 1.2.0.0
+library
+  hs-source-dirs:
+      ./.
+  ghc-options: -Wall
+  build-depends:
+      base >=4 && <5
+    , containers >=0.5
+    , mtl >=2.2.1
+    , parsec >=3
+    , safe >=0.2
+    , text
+  exposed-modules:
+      Barc.Bitter
+      Barc.CCodeGen
+      Barc.CCodeGenBit
+      Barc.ConstantFolder
+      Barc.ExpBit
+      Barc.ExpInner
+      Barc.ExpOuter
+      Barc.ExpUnrolled
+      Barc.FutharkGen
+      Barc.Parser
+      Barc.Runner
+      Barc.Simplifier
+      Barc.Unroller
+  other-modules:
+      Paths_barc
+  default-language: Haskell2010
 
-  Exposed-modules: Barc.Runner
-                   Barc.Parser
-                   Barc.ExpOuter
-                   Barc.Simplifier
-                   Barc.ExpInner
-                   Barc.Unroller
-                   Barc.ExpUnrolled
-                   Barc.Bitter
-                   Barc.ExpBit
-                   Barc.ConstantFolder
-                   Barc.CCodeGen
-                   Barc.CCodeGenBit
-                   Barc.FutharkGen
-
-  Default-Language:   Haskell2010
-
-  Ghc-Options:        -Wall -O3
-
-Executable barc
-  Main-is: barc.hs
-
-  -- Packages needed in order to build this package.
-  Build-depends: barc
-               , base >= 4 && < 5
-               , containers >= 0.5
-               , mtl >= 2.2.1
-               , parsec >= 3.0.0
-               , safe >= 0.2
-               , text >= 1.2.0.0
-
-  Default-Language:   Haskell2010
-
-  Ghc-Options:        -Wall -O3
+executable futhark
+  main-is: barc.hs
+  ghc-options: -Wall
+  build-depends:
+      barc
+    , base >=4 && <5
+    , containers >=0.5
+    , mtl >=2.2.1
+    , parsec >=3
+    , safe >=0.2
+    , text
+  other-modules:
+      Paths_barc
+  default-language: Haskell2010
