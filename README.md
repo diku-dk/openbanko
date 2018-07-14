@@ -1,4 +1,4 @@
-# Big Banko: Scaling for the Next Generation
+# OpenBanko: Scaling for the Next Generation
 
 Tools and toys for Big Banko processing
 
