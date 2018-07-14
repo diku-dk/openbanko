@@ -4,12 +4,12 @@ sudo: required
 
 dist: trusty
 
-cache:
-  directories:
-    - $HOME/.stack
-    - $TRAVIS_BUILD_DIR/barc/.stack-work
+# cache:
+  # directories:
+    # - $HOME/.stack
+    # - $TRAVIS_BUILD_DIR/barc/.stack-work
     # - multirust
-  timeout: 300
+  # timeout: 300
 
 before_install:
   # # Rust
@@ -18,24 +18,24 @@ before_install:
   # - multirust default 1.5.0
   # - rustc --version
 
-  # Haskell
-  - export PATH=$HOME/.local/bin:$PATH
-  - mkdir -p ~/.local/bin
-  - curl -sL https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack';
-  - stack --no-terminal setup --verbose
-  - (cd barc; stack build --fast)
+  # # Haskell
+  # - export PATH=$HOME/.local/bin:$PATH
+  # - mkdir -p ~/.local/bin
+  # - curl -sL https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack';
+  # - stack --no-terminal setup --verbose
+  # - (cd barc; stack build --fast)
 
   # Go
   - sudo apt-get -y install golang
 
 install:
   - (cd bankopladeformat; make)
-  - (cd bankopak; stack build --fast)
+  # - (cd bankopak; stack build --fast)
   # - (cd bankoviser; make)
   - (cd bankoconv; make)
   - (cd barc; make)
 
 script:
   - (cd bankopak; make test)
-  - (cd barc; stack install)
+  # - (cd barc; stack install)
   - (cd barc/banko; make test)
