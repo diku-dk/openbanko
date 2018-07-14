@@ -38,4 +38,4 @@ install:
 script:
   - (cd bankopak; make test)
   # - (cd barc; stack install)
-  - (cd barc/banko; make test)
+  # - (cd barc/banko; make test)
