@@ -30,10 +30,10 @@ before_install:
 
 install:
   - (cd bankopladeformat; make)
-  # - (cd bankopak; stack build --fast)
+  - (cd bankopak; make)
   # - (cd bankoviser; make)
   - (cd bankoconv; make)
-  - (cd barc; make)
+  # - (cd barc; stack build --fast)
 
 script:
   - (cd bankopak; make test)
