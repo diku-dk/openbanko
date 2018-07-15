@@ -80,7 +80,7 @@ let find_winners [num_boards] (boards: [num_boards]winnage): winners =
      |> map2 winnage_to_winner (iota num_boards)
      |> reduce game_winner no_winner
 
-let run_game (picks: []num) (boards: []board): winners =
+let run_game (boards: []board) (picks: []num): winners =
   boards
   |> map (turns_to_win picks)
   |> find_winners
@@ -93,9 +93,11 @@ entry run [num_boards] (simultaneous_games: i32) (boards: [num_boards][3][5]num)
   let rngs = [num_boards*simultaneous_games]
              |> rng_engine.rng_from_seed
              |> rng_engine.split_rng simultaneous_games
-  let (_, paths) = map2 ryst.ryst_posen rngs (replicate simultaneous_games (1...90)) |> unzip2
+  let (_, paths) = replicate simultaneous_games (1...90)
+                   |> map2 ryst.ryst_posen rngs
+                   |> unzip2
   let boards = map board_from_array boards
-  in map (flip run_game boards) paths
+  in map (run_game boards) paths
 
 -- | Extracting arrays of, for each game, the index of the winning
 -- board for one row, two rows, and three rows.
