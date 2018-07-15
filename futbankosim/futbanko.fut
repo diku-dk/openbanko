@@ -30,7 +30,8 @@ let ryst_posen [n] (r: E.rng) (p: [n]num) =
     in (r, p)
 }
 
-module ryst = mk_ryst_posen minstd_rand
+module rng_engine = xorshift128plus
+module ryst = mk_ryst_posen rng_engine
 
 let board_from_array (board: [3][5]num): board =
   let row r = (r[0], r[1], r[2], r[3], r[4])
@@ -88,8 +89,8 @@ let run_game (picks: []num) (boards: []board): winners =
 entry run [num_boards] (simultaneous_games: i32) (boards: [num_boards][3][5]num)
                      : [simultaneous_games]winners =
   let rngs = [num_boards*simultaneous_games]
-             |> minstd_rand.rng_from_seed
-             |> minstd_rand.split_rng simultaneous_games
+             |> rng_engine.rng_from_seed
+             |> rng_engine.split_rng simultaneous_games
   let (_, paths) = map2 ryst.ryst_posen rngs (replicate simultaneous_games (1...90)) |> unzip2
   let boards = map board_from_array boards
   in map (flip run_game boards) paths
