@@ -5,8 +5,6 @@ type num = i8 -- Enough for 1-90.
 type row = (num, num, num, num, num)
 type board = (row, row, row)
 
-let prut x = x + 2
-
 let contains (b: board) (c: num) =
   let row_contains (r: row) =
     r.1 == c || r.2 == c || r.3 == c || r.4 == c || r.5 == c
