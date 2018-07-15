@@ -1,2 +1,5 @@
-futbankosim.c
+futbanko.c
+futbanko
+futbanko.h
+*.o
 futbankosim
