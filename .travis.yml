@@ -4,6 +4,15 @@ sudo: required
 
 dist: trusty
 
+addons:
+  apt:
+    packages:
+    - wget
+    - libgmp-dev
+    - libffi6
+    - ocl-icd-libopencl1
+    - opencl-headers
+
 # cache:
   # directories:
     # - $HOME/.stack
@@ -25,6 +34,11 @@ before_install:
   # - stack --no-terminal setup --verbose
   # - (cd barc; stack build --fast)
 
+  # install Futhark
+  - wget http://futhark-lang.org/releases/futhark-nightly-linux-x86_64.tar.xz
+  - tar xf futhark-nightly-linux-x86_64.tar.xz
+  - (cd futhark-nightly-linux-x86_64/ && PREFIX=$HOME/.local make install)
+
   # Go
   - sudo apt-get -y install golang
 
@@ -34,6 +48,7 @@ install:
   # - (cd bankoviser; make)
   - (cd bankoconv; make)
   # - (cd barc; stack build --fast)
+  - (cd futbankosim; make)
 
 script:
   - (cd bankopak; make test)
