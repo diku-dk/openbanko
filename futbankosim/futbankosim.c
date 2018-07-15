@@ -50,8 +50,10 @@ static int read_boards(FILE *in, int8_t **boards_out, int *nboards) {
 int main(int argc, char** argv) {
   int ngames = 1000;
   int opt, verbose = 0;
+  unsigned int seed = 0;
+  struct timeval t_start, t_end;
 
-  while ((opt = getopt(argc, argv, "p:b:g:r:V")) != -1) {
+  while ((opt = getopt(argc, argv, "g:s:V")) != -1) {
     switch (opt) {
     case 'g':
       ngames = atoi(optarg);
@@ -59,11 +61,28 @@ int main(int argc, char** argv) {
     case 'V':
       verbose = 1;
       break;
+    case 's':
+      seed = atoi(optarg);
+      break;
     default:
       fprintf(stderr, "Usage: %s [-g games]\n",
               argv[0]);
       exit(EXIT_FAILURE);
     }
+  }
+
+  gettimeofday(&t_start, NULL);
+
+  if (!seed) {
+    /* The game is heavily dependent on good-quality random numbers, so
+       we seed as best we are able. */
+    FILE* f = fopen("/dev/urandom", "rb");
+    seed ^= fread(&seed, sizeof(unsigned int), 1, f);
+    fclose(f);
+
+    seed ^= time(NULL);
+    seed ^= getpid();
+    seed ^= getppid();
   }
 
   int8_t *boards;
@@ -81,13 +100,12 @@ int main(int argc, char** argv) {
   struct futhark_i8_3d *boards_fut = futhark_new_i8_3d(ctx, boards, nboards, 3, 5);
 
   assert(futhark_context_sync(ctx) == 0);
+  free(boards);
 
   struct futhark_opaque_game_winners *winners;
 
-  struct timeval t_start, t_end;
-
   gettimeofday(&t_start, NULL);
-  assert(futhark_entry_run(ctx, &winners, ngames, boards_fut) == 0);
+  assert(futhark_entry_run(ctx, &winners, seed, ngames, boards_fut) == 0);
   assert(futhark_context_sync(ctx) == 0);
   gettimeofday(&t_end, NULL);
 
@@ -124,6 +142,14 @@ int main(int argc, char** argv) {
   for (int i = 0; i < nboards; i++) {
     printf("Board %10d: %d wins\n", i, num_wins[i]);
   }
+
+  futhark_free_i32_1d(ctx, one_row_winners_fut);
+  futhark_free_i32_1d(ctx, two_rows_winners_fut);
+  futhark_free_i32_1d(ctx, three_rows_winners_fut);
+  futhark_free_i8_3d(ctx, boards_fut);
+  futhark_free_opaque_game_winners(ctx, winners);
+  futhark_context_free(ctx);
+  futhark_context_config_free(cfg);
 
   return 0;
 }

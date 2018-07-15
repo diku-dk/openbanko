@@ -86,9 +86,11 @@ let run_game (boards: []board) (picks: []num): winners =
 type game_winners = []winners
 
 -- | Main simulation entry point.
-entry run [num_boards] (simultaneous_games: i32) (boards: [num_boards][3][5]num)
+entry run [num_boards] (seed: i32)
+                       (simultaneous_games: i32)
+                       (boards: [num_boards][3][5]num)
                      : game_winners =
-  let rngs = [num_boards*simultaneous_games]
+  let rngs = [seed ^ num_boards ^ simultaneous_games]
              |> rng_engine.rng_from_seed
              |> rng_engine.split_rng simultaneous_games
   let (_, paths) = replicate simultaneous_games (1...90)
