@@ -91,11 +91,9 @@ int main(int argc, char** argv) {
   assert(futhark_context_sync(ctx) == 0);
   gettimeofday(&t_end, NULL);
 
-  if (verbose) {
-    printf("Executed %d games of %d boards each in %dms\n", ngames, nboards,
-           (int) ((t_end.tv_sec*1000+t_end.tv_usec/1000) -
-                  (t_start.tv_sec*1000+t_start.tv_usec/1000)));
-  }
+  printf("Executed %d games, of %d boards each, in %dms.\n", ngames, nboards,
+         (int) ((t_end.tv_sec*1000+t_end.tv_usec/1000) -
+                (t_start.tv_sec*1000+t_start.tv_usec/1000)));
 
   struct futhark_i32_1d *one_row_winners_fut, *two_rows_winners_fut, *three_rows_winners_fut;
   assert(futhark_entry_winners_per_game
@@ -115,8 +113,10 @@ int main(int argc, char** argv) {
   int32_t *num_wins = calloc(nboards, sizeof(int32_t));
 
   for (int i = 0; i < ngames; i++) {
-    printf("Game %10d: board %d won (board %d first to one row; board %d first to two rows)\n",
-           i, one_row_winners[i], two_rows_winners[i], three_rows_winners[i]);
+    if (verbose) {
+      printf("Game %10d: board %d won (board %d first to one row; board %d first to two rows)\n",
+             i, one_row_winners[i], two_rows_winners[i], three_rows_winners[i]);
+    }
     num_wins[one_row_winners[i]]++;
   }
 
