@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 
   assert(futhark_context_sync(ctx) == 0);
 
-  struct futhark_opaque_bc6726b1 *winners;
+  struct futhark_opaque_game_winners *winners;
 
   struct timeval t_start, t_end;
 
@@ -110,6 +110,7 @@ int main(int argc, char** argv) {
   assert(futhark_values_i32_1d(ctx, one_row_winners_fut, one_row_winners) == 0);
   assert(futhark_values_i32_1d(ctx, two_rows_winners_fut, two_rows_winners) == 0);
   assert(futhark_values_i32_1d(ctx, three_rows_winners_fut, three_rows_winners) == 0);
+  assert(futhark_context_sync(ctx) == 0);
 
   int32_t *num_wins = calloc(nboards, sizeof(int32_t));
 

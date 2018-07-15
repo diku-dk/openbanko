@@ -85,9 +85,11 @@ let run_game (picks: []num) (boards: []board): winners =
   |> map (turns_to_win picks)
   |> find_winners
 
+type game_winners = []winners
+
 -- | Main simulation entry point.
 entry run [num_boards] (simultaneous_games: i32) (boards: [num_boards][3][5]num)
-                     : [simultaneous_games]winners =
+                     : game_winners =
   let rngs = [num_boards*simultaneous_games]
              |> rng_engine.rng_from_seed
              |> rng_engine.split_rng simultaneous_games
@@ -97,7 +99,7 @@ entry run [num_boards] (simultaneous_games: i32) (boards: [num_boards][3][5]num)
 
 -- | Extracting arrays of, for each game, the index of the winning
 -- board for one row, two rows, and three rows.
-entry winners_per_game (ws: []winners): ([]i32, []i32, []i32) =
+entry winners_per_game (ws: game_winners): ([]i32, []i32, []i32) =
   (map (.one_row.who) ws,
    map (.two_rows.who) ws,
    map (.three_rows.who) ws)
