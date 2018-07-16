@@ -1,22 +1,14 @@
 CC=cc
 CFLAGS=-O2 -std=c99 -Wall -Wextra -pedantic -Wno-unused-function
+EXES=bankopladeformat bankocmp bankosplit bankoanalyse bankosort
 
-all: bankopladeformat bankocmp bankosplit bankoanalyse
+all: $(EXES)
 
-bankopladeformat: bankopladeformat.c bankopladeformat.h
-	$(CC) $(CFLAGS) -o $@ $<
-
-bankocmp: bankocmp.c bankopladeformat.h
-	$(CC) $(CFLAGS) -o $@ $<
-
-bankosplit: bankosplit.c bankopladeformat.h
-	$(CC) $(CFLAGS) -o $@ $<
-
-bankoanalyse: bankoanalyse.c bankopladeformat.h
+%: %.c bankopladeformat.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 clean:
-	rm -f bankopladeformat bankocmp bankojoin bankosplit_test_*
+	rm -f $(EXES) bankosplit_test_*
 
 TESTFILE=../boards/1000_boards.bankopladeformat
 
