@@ -235,7 +235,6 @@ randomBoard = do
           let cs = validCells b i
           c <- choice cs
           let b' = setCell b i $ FilledIn c
-          -- unsafePerformIO (print c) `seq`
           step b' is
 
 randomBoardIO :: IO Board
@@ -296,27 +295,6 @@ nPossibleBoards bi = sum $ map poss perms
                 maxk (_ : us) = maxk us
 
 
-
--- data RowCellKind = BlankKind | FilledInKind
---   deriving (Show)
--- type RowKind = [RowCellKind]
-
--- stuff = stuff' 5 4
---   where stuff' f b = f_res ++ b_res ++ end
---           where f_res = if f > 0
---                         then map (FilledInKind :) (stuff' (f - 1) b)
---                         else []
---                 b_res = if b > 0
---                         then map (BlankKind :) (stuff' f (b - 1))
---                         else []
---                 end = if f == 0 && b == 0
---                       then [[]]
---                       else []
-
--- --[(RowKind, RowKind, RowKind)]
-
--- rowsCanEndWell :: BoardIncomplete -> Bool
--- rowsCanEndWell = undefined
 
 main :: IO ()
 --main = putStr =<< formatBoard <$> randomBoardIO
