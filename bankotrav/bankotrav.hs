@@ -275,21 +275,25 @@ decodePath t = (\(_, bi, p) -> (fromIncomplete bi, p)) $ foldl step (t, emptyBoa
 compressDebug :: Board -> String
 compressDebug b = showIntAtBase 2 intToDigit (encodePath $ boardPath b) ""
 
-nPossibleBoards :: Integer
-nPossibleBoards = sum $ map poss perms
-  where perms = concatMap kindPerms allColumnSignaturePermutations
+nPossibleBoards :: BoardIncomplete -> Integer
+nPossibleBoards bi = sum $ map poss perms
+  where perms = filter (columnPermCanWork bi) $ concatMap kindPerms allColumnSignaturePermutations
         poss :: ColumnBoardPerm -> Integer
         poss perm = product $ zipWith colPoss perm [0..8]
         colPoss :: ColumnPerm -> Int -> Integer
         colPoss (ka, kb, kc) col =
-          let range = fromIntegral (maximumCellValue col - minimumCellValue col + 1)
-          in case length $ filter isNumber [ka, kb, kc] of
-            -- Come on...
-            1 -> range
-            2 -> ((range - 1) * range) `div` 2
-            3 -> sum $ map (\i -> i * (range - 1 - i) ) [1..range - 2]
-            4 -> error "not possible!"
+          let (a, b, c) = getColumn bi col
+          in fromIntegral $ length $ work (fromIntegral (minimumCellValue col - 1)) (zip [a, b, c] [ka, kb, kc])
+          where work _ [] = [[]]
+                work prev ((t, tk) : us) = case tk of
+                  Blank -> work prev us
+                  Number -> case t of
+                    FilledIn (ValueCell v) -> work v us
+                    _ -> concatMap (\t -> work t us) [(prev + 1)..(maxk us)]
 
+                maxk [] = maximumCellValue col
+                maxk ((FilledIn (ValueCell t), _) : _) = t - 1
+                maxk (_ : us) = maxk us
 
 
 
@@ -316,4 +320,6 @@ nPossibleBoards = sum $ map poss perms
 
 main :: IO ()
 --main = putStr =<< formatBoard <$> randomBoardIO
-main = print nPossibleBoards
+main = print $ nPossibleBoards board
+  where -- board = setCell emptyBoard (0, 0) (FilledIn (ValueCell 3))
+        board = emptyBoard
