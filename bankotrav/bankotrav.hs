@@ -131,7 +131,6 @@ kindPerms = filter valid . perms . map columnKindPerms
         valid :: ColumnBoardPerm -> Bool
         valid = all ((== 5) . length . filter isNumber) . transpose . map (\(a, b, c) -> [a, b, c])
 
--- This is actually only 1554.
 columnSignaturePermutations :: ColumnSignature -> [ColumnBoardKind]
 columnSignaturePermutations (threes, twos, ones) =
   threes_results ++ twos_results ++ ones_results ++ end
@@ -152,49 +151,51 @@ columnSignaturePermutations (threes, twos, ones) =
           then [[]]
           else []
 
+-- This is actually only 1554.
 allColumnSignaturePermutations :: [ColumnBoardKind]
 allColumnSignaturePermutations = concatMap columnSignaturePermutations validColumnSignatures
 
 columnsCanEndWell :: BoardIncomplete -> Bool
 columnsCanEndWell board = any (boardColumnsCanEndInKind board) allColumnSignaturePermutations
 
+
+minim column = Just $ FilledIn $ ValueCell $ minimumCellValue column
+maxim column = Just $ FilledIn $ ValueCell $ maximumCellValue column
+
+okays column a b c =
+  let c' = case c of
+        FilledIn (ValueCell k) -> FilledIn (ValueCell (k - 1))
+        _ -> c
+
+      a_okay =
+        not (isFilledInBlank a) && isFilledIn a || (not (isFilledInBlank a) &&
+                         minim column `isLowerOrBlank` Just b &&
+                         minim column `isLowerOrBlank` Just c)
+      b_okay = not (isFilledInBlank b) && isFilledIn b || (not (isFilledInBlank b) &&
+                                Just a `isLowerOrBlank` Just c' &&
+                                minim column `isLowerOrBlank` Just c &&
+                                Just a `isLowerOrBlank` maxim column)
+      c_okay = not (isFilledInBlank c) && isFilledIn c || (not (isFilledInBlank c) &&
+                                Just b `isLowerOrBlank` maxim column &&
+                                Just a `isLowerOrBlank` maxim column)
+  in (a_okay, b_okay, c_okay)
+
+columnPermCanWork :: BoardIncomplete -> ColumnBoardPerm -> Bool
+columnPermCanWork board perm = and $ zipWith3 (columnColumnPermCanWork board) [0..8] perm (map (getColumn board) [0..8])
+
+columnColumnPermCanWork :: BoardIncomplete -> Int -> ColumnPerm -> Column CellIncomplete -> Bool
+columnColumnPermCanWork board column (ka, kb, kc) (a, b, c) =
+  let (a_okay, b_okay, c_okay) = okays column a b c
+  in ok ka a a_okay && ok kb b b_okay && ok kc c c_okay
+  where ok Number _ o = o
+        ok Blank t _ = case t of
+          FilledIn BlankCell -> True
+          NotFilledIn -> True -- ?
+          _ -> False
+
 boardColumnsCanEndInKind :: BoardIncomplete -> ColumnBoardKind -> Bool
 boardColumnsCanEndInKind board kind = okayColumnWise && okayRowWise
-  where okayRowWise = any columnPermCanWork $ kindPerms kind
-
-        minim column = Just $ FilledIn $ ValueCell $ minimumCellValue column
-        maxim column = Just $ FilledIn $ ValueCell $ maximumCellValue column
-
-        okays column a b c =
-          let c' = case c of
-                FilledIn (ValueCell k) -> FilledIn (ValueCell (k - 1))
-                _ -> c
-
-              a_okay =
-                not (isFilledInBlank a) && isFilledIn a || (not (isFilledInBlank a) &&
-                                 minim column `isLowerOrBlank` Just b &&
-                                 minim column `isLowerOrBlank` Just c)
-              b_okay = not (isFilledInBlank b) && isFilledIn b || (not (isFilledInBlank b) &&
-                                        Just a `isLowerOrBlank` Just c' &&
-                                        minim column `isLowerOrBlank` Just c &&
-                                        Just a `isLowerOrBlank` maxim column)
-              c_okay = not (isFilledInBlank c) && isFilledIn c || (not (isFilledInBlank c) &&
-                                        Just b `isLowerOrBlank` maxim column &&
-                                        Just a `isLowerOrBlank` maxim column)
-          in (a_okay, b_okay, c_okay)
-
-        columnPermCanWork :: ColumnBoardPerm -> Bool
-        columnPermCanWork perm = and $ zipWith3 columnColumnPermCanWork [0..8] perm (map (getColumn board) [0..8])
-
-        columnColumnPermCanWork :: Int -> ColumnPerm -> Column CellIncomplete -> Bool
-        columnColumnPermCanWork column (ka, kb, kc) (a, b, c) =
-          let (a_okay, b_okay, c_okay) = okays column a b c
-          in ok ka a a_okay && ok kb b b_okay && ok kc c c_okay
-          where ok Number _ o = o
-                ok Blank t _ = case t of
-                  FilledIn BlankCell -> True
-                  NotFilledIn -> True -- ?
-                  _ -> False
+  where okayRowWise = any (columnPermCanWork board) $ kindPerms kind
 
         okayColumnWise = and $ zipWith3 columnCanEndInKind [0..8] (map (getColumn board) [0..8]) kind
 
@@ -274,6 +275,24 @@ decodePath t = (\(_, bi, p) -> (fromIncomplete bi, p)) $ foldl step (t, emptyBoa
 compressDebug :: Board -> String
 compressDebug b = showIntAtBase 2 intToDigit (encodePath $ boardPath b) ""
 
+nPossibleBoards :: Integer
+nPossibleBoards = sum $ map poss perms
+  where perms = concatMap kindPerms allColumnSignaturePermutations
+        poss :: ColumnBoardPerm -> Integer
+        poss perm = product $ zipWith colPoss perm [0..8]
+        colPoss :: ColumnPerm -> Int -> Integer
+        colPoss (ka, kb, kc) col =
+          let range = fromIntegral (maximumCellValue col - minimumCellValue col + 1)
+          in case length $ filter isNumber [ka, kb, kc] of
+            -- Come on...
+            1 -> range
+            2 -> ((range - 1) * range) `div` 2
+            3 -> sum $ map (\i -> i * (range - 1 - i) ) [1..range - 2]
+            4 -> error "not possible!"
+
+
+
+
 -- data RowCellKind = BlankKind | FilledInKind
 --   deriving (Show)
 -- type RowKind = [RowCellKind]
@@ -296,4 +315,5 @@ compressDebug b = showIntAtBase 2 intToDigit (encodePath $ boardPath b) ""
 -- rowsCanEndWell = undefined
 
 main :: IO ()
-main = putStr =<< formatBoard <$> randomBoardIO
+--main = putStr =<< formatBoard <$> randomBoardIO
+main = print nPossibleBoards
