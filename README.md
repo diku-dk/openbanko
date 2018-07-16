@@ -1,5 +1,7 @@
 # OpenBanko: Scaling for the Elder Generation
 
+![Logo](bankochip.jpg)
+
 Tools and toys for Big Banko processing
 
 [![Build Status](https://travis-ci.org/diku-dk/openbanko.svg?branch=master)](https://travis-ci.org/diku-dk/openbanko)
