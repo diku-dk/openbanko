@@ -22,6 +22,7 @@ The specification for banko cards: [bankopladeformat.md](bankopladeformat.md)
 + [barc](barc): Check if boards are valid banko boards -- also
   generalizes to other games through a DSL
 + [cbankosim](cbankosim/): Automatically simulate playing banko
++ [futbankosim](futbankosim/): GPU-accelerated massively parallel banko simulation
 
 
 ## Citation
