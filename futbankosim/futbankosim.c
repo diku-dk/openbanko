@@ -52,8 +52,9 @@ int main(int argc, char** argv) {
   int opt, verbose = 0;
   unsigned int seed = 0;
   struct timeval t_start, t_end;
+  const char *device = "";
 
-  while ((opt = getopt(argc, argv, "g:s:V")) != -1) {
+  while ((opt = getopt(argc, argv, "d:g:s:V")) != -1) {
     switch (opt) {
     case 'g':
       ngames = atoi(optarg);
@@ -64,8 +65,11 @@ int main(int argc, char** argv) {
     case 's':
       seed = atoi(optarg);
       break;
+    case 'd':
+      device = optarg;
+      break;
     default:
-      fprintf(stderr, "Usage: %s [-g games]\n",
+      fprintf(stderr, "Usage: %s [-g games] [-s seed] [-d device] [-V]\n",
               argv[0]);
       exit(EXIT_FAILURE);
     }
@@ -95,6 +99,8 @@ int main(int argc, char** argv) {
   }
 
   struct futhark_context_config *cfg = futhark_context_config_new();
+  futhark_context_config_set_device(cfg, device);
+
   struct futhark_context *ctx = futhark_context_new(cfg);
 
   struct futhark_i8_3d *boards_fut = futhark_new_i8_3d(ctx, boards, nboards, 3, 5);
