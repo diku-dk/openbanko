@@ -43,13 +43,13 @@ before_install:
   - sudo apt-get -y install golang
 
 install:
+  - pwd
+  - ls
   - (cd bankopladeformat; make)
   - (cd bankopak; make)
   - (cd bankoviser; make)
   - (cd bankoconv; make)
   # - (cd barc; stack build --fast)
-  - pwd
-  - ls
   - (cd futbankosim; make)
 
 script:
