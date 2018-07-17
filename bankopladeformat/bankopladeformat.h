@@ -45,6 +45,9 @@ static void banko_reader_clear_error(struct banko_reader *reader);
 static void banko_write_all_boards(FILE *file, struct board* boards, int nboards);
 static int banko_read_all_boards(FILE *file, struct board** boards, int *nboards);
 
+/* Binary mask stored in least significant 27 bits. */
+static int banko_board_mask(const struct board* board);
+
 /*
  * All function definitions inlined and defined statically.
  */
@@ -169,6 +172,17 @@ static int banko_read_all_boards(FILE *in, struct board **boards_out, int *nboar
   *nboards = used;
 
   return error;
+}
+
+static int banko_board_mask(const struct board* board) {
+  int r = 0;
+  for (int row = 0; row < BOARD_ROWS; row++) {
+    for (int col = 0; col < BOARD_COLS; col++) {
+      r = (r << 1) | (board->cells[row][col] > 0);
+    }
+  }
+
+  return r;
 }
 
 #endif
