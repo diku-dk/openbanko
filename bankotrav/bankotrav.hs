@@ -247,7 +247,7 @@ formatBoard = unlines . map (unwords . map cellFormat) . transpose
 
 
 boardIndices :: [CellIndex]
-boardIndices = reverse $ concatMap (\c -> map (c, ) [0..2]) [0..8]
+boardIndices = concatMap (\c -> map (c, ) [0..2]) [0..8]
 
 boardPath :: Board -> [(Int, Int)]
 boardPath b = reverse $ fst $ foldl step ([], emptyBoard) boardIndices
