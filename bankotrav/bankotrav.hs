@@ -1,5 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TupleSections #-}
 -- bankotrav: traverse banko boards
 module Main where
@@ -11,8 +10,8 @@ import Numeric (showIntAtBase)
 import Data.Char (intToDigit)
 
 import qualified Data.Random as DR
+import qualified Data.Random.List as DRL
 import qualified Control.Monad.Random as CMR
-import qualified Data.Random.Extras as DRE
 import Data.Word (Word64)
 
 import System.IO.Unsafe (unsafePerformIO)
@@ -236,11 +235,11 @@ randomSt rvar = DR.runRVar rvar (CMR.getRandom :: m Word64)
 
 -- | Shuffles list.
 shuffle :: CMR.MonadRandom m => [a] -> m [a]
-shuffle = randomSt . DRE.shuffle
+shuffle = randomSt . DRL.shuffle
 
 -- | Random element from list.
 choice :: CMR.MonadRandom m => [a] -> m a
-choice = randomSt . DRE.choice
+choice = randomSt . DRL.randomElement
 
 randomBoard :: Random Board
 randomBoard = do
