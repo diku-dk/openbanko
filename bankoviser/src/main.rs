@@ -1,5 +1,5 @@
 use std::{env, ptr, isize};
-use std::io::prelude::*;
+use std::fs::OpenOptions;
 
 extern crate rustbox;
 
@@ -8,7 +8,7 @@ use rustbox::Key;
 
 extern crate memmap;
 
-use memmap::{Mmap, Protection};
+use memmap::MmapMut;
 
 static BANKOCOLS: usize = 9;
 static BANKOROWS: usize = 3;
@@ -231,13 +231,19 @@ impl Video {
 }
 
 struct BankoMemory {
-	mmap: Mmap,
+	mmap: MmapMut,
 }
 
 impl BankoMemory {
 	fn init(path: &str) -> BankoMemory {
+		let file = OpenOptions::new()
+			.read(true)
+			.write(true)
+			.open(path)
+			.unwrap();
+			
 		BankoMemory {
-			mmap: Mmap::open_path(path, Protection::ReadWrite).unwrap(),
+			mmap: unsafe { MmapMut::map_mut(&file).unwrap() },
 		}
 	}
 	
@@ -246,7 +252,7 @@ impl BankoMemory {
 	}
 	
 	fn get_plade(&self, no: usize) -> [[u8; 9]; 3] {
-		let ptr = self.mmap.ptr() as *const [u8; 82];
+		let ptr = self.mmap.as_ptr() as *const [u8; 82];
 		let bytes = unsafe { *ptr.offset(no as isize) };
 	
 		let mut plade: [[u8; 9]; 3] = [[0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -298,7 +304,7 @@ impl BankoMemory {
 	fn swap(&self, a: usize, b: usize) {
 		assert!(a <= isize::MAX as usize);
 		assert!(b <= isize::MAX as usize);
-		let p = self.mmap.ptr() as *mut [u8; 82];
+		let p = self.mmap.as_ptr() as *mut [u8; 82];
 		unsafe {
 			let p_a = p.offset(a as isize);
 			let p_b = p.offset(b as isize);
@@ -348,34 +354,34 @@ fn main() {
 		match v.rustbox.poll_event(false) {
 			Ok(rustbox::Event::KeyEvent(key)) => {
 				match key {
-					Some(Key::Char('q')) => { break 'main; },
-					Some(Key::Char('l')) => { break 'main; },
-					Some(Key::Char('g')) => {
+					Key::Char('q') => { break 'main; },
+					Key::Char('l') => { break 'main; },
+					Key::Char('g') => {
 						v.clear_status();
 						till_clear = 5;
 						plader.save();
 						v.display_status("Gemt!");
 					},
-					Some(Key::Char('f')) => {
+					Key::Char('f') => {
 						mode = match mode { 
 							Mode::Normal => Mode::Moving,
 							Mode::Moving => Mode::Normal,
 						};
 						v.set_mode(mode);
 					},
-					Some(Key::Right) => {
+					Key::Right => {
 						if mode == Mode::Moving && current + 1 < total {
 							plader.swap(current, current+1);
 						}
 						current = if current + 1 < total { current + 1 } else { current };
 					},
-					Some(Key::Left) => {
+					Key::Left => {
 						if mode == Mode::Moving && current > 0 {
 							plader.swap(current-1, current);
 						}
 						current = if current > 0 { current - 1 } else { current };
 					},
-					Some(Key::Up) => {
+					Key::Up => {
 						if mode == Mode::Moving && current + 1 < total {
 							plader.swap(current, if current + bigskip >= total {
 								total - 1 
@@ -385,7 +391,7 @@ fn main() {
 						}
 						current = if current + 1 < total { if current + bigskip >= total { total - 1 } else { current + bigskip } } else { current };
 					},
-					Some(Key::Down) => {
+					Key::Down => {
 						if mode == Mode::Moving && current > 0 {
 							plader.swap(if current < bigskip { 0 } else { current - bigskip }, current);
 						}
