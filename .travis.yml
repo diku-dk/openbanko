@@ -48,6 +48,8 @@ install:
   - (cd bankoviser; make)
   - (cd bankoconv; make)
   # - (cd barc; stack build --fast)
+  - pwd
+  - ls
   - (cd futbankosim; make)
 
 script:
