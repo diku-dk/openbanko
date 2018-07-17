@@ -21,11 +21,11 @@ addons:
   # timeout: 300
 
 before_install:
-  # # Rust
-  # - if [ ! -d multirust ]; then git clone --recursive --depth 1 https://github.com/brson/multirust; cd multirust; git submodule update --init; ./build.sh; fi
-  # - (cd multirust; sudo ./install.sh)
-  # - multirust default 1.5.0
-  # - rustc --version
+  # Rust
+  - if [ ! -d multirust ]; then git clone --recursive --depth 1 https://github.com/brson/multirust; cd multirust; git submodule update --init; ./build.sh; fi
+  - (cd multirust; sudo ./install.sh)
+  - multirust default 1.26.0
+  - rustc --version
 
   # # Haskell
   # - export PATH=$HOME/.local/bin:$PATH
@@ -45,7 +45,7 @@ before_install:
 install:
   - (cd bankopladeformat; make)
   - (cd bankopak; make)
-  # - (cd bankoviser; make)
+  - (cd bankoviser; make)
   - (cd bankoconv; make)
   # - (cd barc; stack build --fast)
   - (cd futbankosim; make)
