@@ -16,7 +16,16 @@ static int cmp_boards(const void *xp, const void *yp) {
   const struct board *x = xp;
   const struct board *y = yp;
 
-  return memcmp(x->cells, y->cells, BOARD_ROWS * BOARD_COLS);
+  int xmask = banko_board_mask(x);
+  int ymask = banko_board_mask(y);
+
+  if (xmask < ymask) {
+    return -1;
+  } else if (ymask < xmask) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 int main(int argc, char** argv) {

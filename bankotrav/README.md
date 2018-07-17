@@ -1,3 +1,4 @@
 # bankotrav
 
-Traverse banko boards for both compression and generation.
+Traverse banko boards for both random generation, compression, and
+decompression.
