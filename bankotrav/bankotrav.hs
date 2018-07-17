@@ -295,9 +295,48 @@ nPossibleBoards bi = sum $ map poss perms
                 maxk (_ : us) = maxk us
 
 
+boardIndex :: Board -> Integer
+boardIndex board = fst $ foldl step (0, emptyBoard) boardIndices
+  where step (acc, bi) i = fromMaybe (error "impossible!") $ do
+          cell <- getCell board i
+          let choices = validCells bi i
+          choice_i <- findIndex (== cell) choices
+          let bi' = setCell bi i $ FilledIn cell
+              acc' = acc + sum (map (nPossibleBoards . setCell bi i . FilledIn) (take choice_i choices))
+          unsafePerformIO (print ("compress", i, acc, acc')) `seq` return (acc', bi')
+
+indexToBoard :: Integer -> Board
+indexToBoard idx = fromIncomplete $ snd $ foldl step (idx, emptyBoard) boardIndices
+  where step (acc, bi) i =
+          let choices = validCells bi i
+              (choice, prev_sum) = find_choice 0 0 choices
+              acc' = acc - prev_sum
+              bi' = setCell bi i $ FilledIn choice
+          in unsafePerformIO (print ("decompress", i, acc, acc')) `seq` (acc', bi')
+
+          where find_choice cur_choice_i cur (choice : choices) =
+                  let new = nPossibleBoards $ setCell bi i $ FilledIn choice
+                      cur' = cur + new
+                  in if cur' > acc
+                  then (choice, cur)
+                  else find_choice (cur_choice_i + 1) cur' choices
+                find_choice _ _ [] = error "impossible!"
+
 
 main :: IO ()
 --main = putStr =<< formatBoard <$> randomBoardIO
-main = print $ nPossibleBoards board
-  where -- board = setCell emptyBoard (0, 0) (FilledIn (ValueCell 3))
-        board = emptyBoard
+main = do
+  putStrLn "Generating random board..."
+  board <- randomBoardIO
+  putStr $ formatBoard board
+  putStrLn "Compressing board..."
+  let idx = boardIndex board
+  print idx
+  putStrLn $ showIntAtBase 2 intToDigit idx ""
+  putStrLn "Decompressing board..."
+  let board' = indexToBoard idx
+  putStr $ formatBoard board'
+
+  --print $ nPossibleBoards board
+--  where -- board = setCell emptyBoard (0, 0) (FilledIn (ValueCell 3))
+  --      board = emptyBoard
