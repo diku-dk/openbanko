@@ -1,67 +1,10 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections #-}
--- bankotrav: traverse banko boards
-module Main where
+module Bankotrav.Base where
 
 import Data.List (foldl', transpose, findIndex)
-import Data.Maybe (fromMaybe)
-import Safe (atMay)
-import Numeric (showIntAtBase)
-import Data.Char (intToDigit)
 
-import qualified Data.Random as DR
-import qualified Data.Random.List as DRL
-import qualified Control.Monad.Random as CMR
-import Data.Word (Word64)
+import Bankotrav.Types
 
-import System.IO.Unsafe (unsafePerformIO)
-
-
-data Cell = BlankCell
-          | ValueCell Int
-  deriving (Show, Eq)
-
-data CellIncomplete = NotFilledIn
-                    | FilledIn Cell
-  deriving (Show)
-
-hasValue :: CellIncomplete -> Bool
-hasValue NotFilledIn = False
-hasValue (FilledIn BlankCell) = False
-hasValue _ = True
-
-type CellIndex = (Int, Int)
-
-type BoardBase cell = [[cell]] -- 9 columns * 3 rows
-type Board = BoardBase Cell -- Complete board
-type BoardIncomplete = BoardBase CellIncomplete -- Board in creation
-
-getCell :: BoardBase cell -> CellIndex -> Maybe cell
-getCell board (column, row) = do
-  elems <- atMay board column
-  atMay elems row
-
-setCell :: BoardBase cell -> CellIndex -> cell -> BoardBase cell
-setCell board (column, row) cell =
-  let elems = board !! column
-      elems' = take row elems ++ [cell] ++ drop (row + 1) elems
-  in take column board ++
-     [elems'] ++
-     drop (column + 1) board
-
-type Column cell = (cell, cell, cell)
-
-getColumn :: BoardBase cell -> Int -> Column cell
-getColumn board i = (col !! 0, col !! 1, col !! 2)
-  where col = board !! i
-
-isFilledIn :: CellIncomplete -> Bool
-isFilledIn NotFilledIn = False
-isFilledIn _ = True
-
-isFilledInBlank :: CellIncomplete -> Bool
-isFilledInBlank (FilledIn BlankCell) = True
-isFilledInBlank _ = False
 
 minimumCellValue :: Int -> Int
 minimumCellValue column = column * 10 + if column == 0 then 1 else 0
@@ -91,29 +34,12 @@ isLowerOrBlank a b = case (a, b) of
   _ -> True
 
 
-type ColumnSignature = (Int, Int, Int)
-
 validColumnSignatures :: [ColumnSignature]
 validColumnSignatures = [ (3, 0, 6)
                         , (2, 2, 5)
                         , (1, 4, 4)
                         , (0, 6, 3)
                         ]
-
-data ColumnKind = ThreeCells | TwoCells | OneCell
-  deriving (Show, Eq)
-
-type ColumnBoardKind = [ColumnKind] -- 9 columns
-
-data CellKind = Number | Blank
-  deriving (Show)
-
-isNumber :: CellKind -> Bool
-isNumber Number = True
-isNumber Blank = False
-
-type ColumnPerm = (CellKind, CellKind, CellKind)
-type ColumnBoardPerm = [ColumnPerm] -- 9 columns
 
 kindPerms :: ColumnBoardKind -> [ColumnBoardPerm]
 kindPerms = filter valid . perms . map columnKindPerms
@@ -222,114 +148,6 @@ boardColumnsCanEndInKind board kind = okayColumnWise && okayRowWise
 emptyBoard :: BoardIncomplete
 emptyBoard = replicate 9 $ replicate 3 NotFilledIn
 
-fromIncomplete :: BoardIncomplete -> Board
-fromIncomplete = map (map from')
-  where from' (FilledIn v) = v
-        from' NotFilledIn = error "not fully filled in"
-
-type Random a = CMR.Rand CMR.StdGen a
-
--- | Makes a function that returns a DR.RVar usable by e.g. CMR.Rand.
-randomSt :: forall m a . CMR.MonadRandom m => DR.RVar a -> m a
-randomSt rvar = DR.runRVar rvar (CMR.getRandom :: m Word64)
-
--- | Shuffles list.
-shuffle :: CMR.MonadRandom m => [a] -> m [a]
-shuffle = randomSt . DRL.shuffle
-
--- | Random element from list.
-choice :: CMR.MonadRandom m => [a] -> m a
-choice = randomSt . DRL.randomElement
-
-randomBoard :: Random Board
-randomBoard = do
-  indices <- shuffle $ concatMap (\c -> map (c, ) [0..2]) [0..8]
-  bi <- step emptyBoard indices
-  return $ fromIncomplete bi
-
-  where step :: BoardIncomplete -> [CellIndex] -> Random BoardIncomplete
-        step b [] = return b
-        step b (i : is) = do
-          let cs = validCells b i
-          c <- choice cs
-          let b' = setCell b i $ FilledIn c
-          step b' is
-
-randomBoardIO :: IO Board
-randomBoardIO = CMR.evalRandIO randomBoard
-
-formatBoard :: Board -> String
-formatBoard = unlines . map (unwords . map cellFormat) . transpose
-  where cellFormat BlankCell = "00"
-        cellFormat (ValueCell v) = (if length (show v) == 1 then "0" else "") ++ show v
-
 
 boardIndices :: [CellIndex]
 boardIndices = concatMap (\c -> map (c, ) [0..2]) [0..8]
-
-nPossibleBoards :: BoardIncomplete -> Int
-nPossibleBoards bi = sum $ map poss perms
-  where perms = filter (columnPermCanWork bi) $ concatMap kindPerms allColumnSignaturePermutations
-        poss :: ColumnBoardPerm -> Int
-        poss perm = product $ zipWith colPoss perm [0..8]
-        colPoss :: ColumnPerm -> Int -> Int
-        colPoss (ka, kb, kc) col =
-          let (a, b, c) = getColumn bi col
-          in length $ work (minimumCellValue col - 1) (zip [a, b, c] [ka, kb, kc])
-          where work _ [] = [[]]
-                work prev ((t, tk) : us) = case tk of
-                  Blank -> work prev us
-                  Number -> case t of
-                    FilledIn (ValueCell v) -> work v us
-                    _ -> concatMap (\t -> work t us) [(prev + 1)..(maxk us)]
-
-                maxk [] = maximumCellValue col
-                maxk ((FilledIn (ValueCell t), _) : _) = t - 1
-                maxk (_ : us) = maxk us
-
-
-boardIndex :: Board -> Int
-boardIndex board = fst $ foldl' step (0, emptyBoard) boardIndices
-  where step (acc, bi) i = fromMaybe (error "impossible!") $ do
-          cell <- getCell board i
-          let choices = validCells bi i
-          choice_i <- findIndex (== cell) choices
-          let bi' = setCell bi i $ FilledIn cell
-              acc' = acc + sum (map (nPossibleBoards . setCell bi i . FilledIn) (take choice_i choices))
-          unsafePerformIO (print ("compress", i, acc, acc')) `seq` return (acc', bi')
-
-indexToBoard :: Int -> Board
-indexToBoard idx = fromIncomplete $ snd $ foldl' step (idx, emptyBoard) boardIndices
-  where step (acc, bi) i =
-          let choices = validCells bi i
-              (choice, prev_sum) = find_choice 0 0 choices
-              acc' = acc - prev_sum
-              bi' = setCell bi i $ FilledIn choice
-          in unsafePerformIO (print ("decompress", i, acc, acc')) `seq` (acc', bi')
-
-          where find_choice cur_choice_i cur (choice : choices) =
-                  let new = nPossibleBoards $ setCell bi i $ FilledIn choice
-                      cur' = cur + new
-                  in if cur' > acc
-                  then (choice, cur)
-                  else find_choice (cur_choice_i + 1) cur' choices
-                find_choice _ _ [] = error "impossible!"
-
-
-main :: IO ()
---main = putStr =<< formatBoard <$> randomBoardIO
-main = do
-  putStrLn "Generating random board..."
-  board <- randomBoardIO
-  putStr $ formatBoard board
-  putStrLn "Compressing board..."
-  let idx = boardIndex board
-  print idx
-  putStrLn $ showIntAtBase 2 intToDigit idx ""
-  putStrLn "Decompressing board..."
-  let board' = indexToBoard idx
-  putStr $ formatBoard board'
-
-  --print $ nPossibleBoards board
---  where -- board = setCell emptyBoard (0, 0) (FilledIn (ValueCell 3))
-  --      board = emptyBoard

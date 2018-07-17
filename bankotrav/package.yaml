@@ -13,10 +13,10 @@ dependencies:
   - MonadRandom >= 0.5.1
 
 library:
-  source-dirs: .
+  source-dirs: src
 
 executables:
   bankotrav: &bankotrav
-    main: bankotrav.hs
+    main: src/bankotrav.hs
     dependencies:
       - bankotrav
