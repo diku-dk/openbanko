@@ -48,8 +48,10 @@ void a3_decompress(FILE *out, FILE *in) {
   uint8_t board_values[15];
 
   while (1) {
-    fread(&board_layout, 4, 1, in);
-    fread(board_values, 1, 15, in);
+    if ((fread(&board_layout, 4, 1, in) != 1) ||
+        (fread(board_values, 1, 15, in) != 15)) {
+      break;
+    }
 
     uint32_t mask = 1;
     int index_cur = 0;

@@ -91,7 +91,9 @@ void a4_decompress(FILE *out, FILE *in) {
 
   while (1) {
     number_encoding = 0;
-    fread((uint8_t*) &number_encoding, NECESSARY_BYTES, 1, in);
+    if (fread((uint8_t*) &number_encoding, NECESSARY_BYTES, 1, in) != 1) {
+      break;
+    }
 
     a4_arithmetic_decode((uint8_t*) board_relative_values,
                          BOARD_ROWS * BOARD_COLS,
