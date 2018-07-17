@@ -249,31 +249,6 @@ formatBoard = unlines . map (unwords . map cellFormat) . transpose
 boardIndices :: [CellIndex]
 boardIndices = concatMap (\c -> map (c, ) [0..2]) [0..8]
 
-boardPath :: Board -> [(Int, Int)]
-boardPath b = reverse $ fst $ foldl step ([], emptyBoard) boardIndices
-  where step (path, bi) i = fromMaybe (error "impossible!") $ do
-          cell <- getCell b i
-          let choices = validCells bi i
-          choice_i <- findIndex (== cell) choices
-          let bi' = setCell bi i $ FilledIn cell
-          return ((choice_i, length choices) : path, bi')
-
-encodePath :: [(Int, Int)] -> Integer
-encodePath = foldr (\(i, n) p -> fromIntegral i + fromIntegral n * p) 0
-
-decodePath :: Integer -> (Board, [(Int, Int)])
-decodePath t = (\(_, bi, p) -> (fromIncomplete bi, p)) $ foldl step (t, emptyBoard, []) boardIndices
-  where step (t, bi, p) i =
-          let choices = validCells bi i
-              n = fromIntegral (length choices)
-              cell_i = fromIntegral (t `mod` n)
-              cell = choices !! cell_i
-              bi' = setCell bi i $ FilledIn cell
-          in (t `div` n, bi', (cell_i, fromIntegral n) : p)
-
-compressDebug :: Board -> String
-compressDebug b = showIntAtBase 2 intToDigit (encodePath $ boardPath b) ""
-
 nPossibleBoards :: BoardIncomplete -> Int
 nPossibleBoards bi = sum $ map poss perms
   where perms = filter (columnPermCanWork bi) $ concatMap kindPerms allColumnSignaturePermutations
