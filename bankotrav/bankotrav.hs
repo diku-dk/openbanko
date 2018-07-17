@@ -2,7 +2,7 @@
 -- bankotrav: traverse banko boards
 module Main where
 
-import Data.List (transpose, findIndex)
+import Data.List (foldl', transpose, findIndex)
 import Data.Maybe (fromMaybe)
 import Safe (atMay)
 import Numeric (showIntAtBase)
@@ -274,15 +274,15 @@ decodePath t = (\(_, bi, p) -> (fromIncomplete bi, p)) $ foldl step (t, emptyBoa
 compressDebug :: Board -> String
 compressDebug b = showIntAtBase 2 intToDigit (encodePath $ boardPath b) ""
 
-nPossibleBoards :: BoardIncomplete -> Integer
+nPossibleBoards :: BoardIncomplete -> Int
 nPossibleBoards bi = sum $ map poss perms
   where perms = filter (columnPermCanWork bi) $ concatMap kindPerms allColumnSignaturePermutations
-        poss :: ColumnBoardPerm -> Integer
+        poss :: ColumnBoardPerm -> Int
         poss perm = product $ zipWith colPoss perm [0..8]
-        colPoss :: ColumnPerm -> Int -> Integer
+        colPoss :: ColumnPerm -> Int -> Int
         colPoss (ka, kb, kc) col =
           let (a, b, c) = getColumn bi col
-          in fromIntegral $ length $ work (fromIntegral (minimumCellValue col - 1)) (zip [a, b, c] [ka, kb, kc])
+          in length $ work (minimumCellValue col - 1) (zip [a, b, c] [ka, kb, kc])
           where work _ [] = [[]]
                 work prev ((t, tk) : us) = case tk of
                   Blank -> work prev us
@@ -295,8 +295,8 @@ nPossibleBoards bi = sum $ map poss perms
                 maxk (_ : us) = maxk us
 
 
-boardIndex :: Board -> Integer
-boardIndex board = fst $ foldl step (0, emptyBoard) boardIndices
+boardIndex :: Board -> Int
+boardIndex board = fst $ foldl' step (0, emptyBoard) boardIndices
   where step (acc, bi) i = fromMaybe (error "impossible!") $ do
           cell <- getCell board i
           let choices = validCells bi i
@@ -305,8 +305,8 @@ boardIndex board = fst $ foldl step (0, emptyBoard) boardIndices
               acc' = acc + sum (map (nPossibleBoards . setCell bi i . FilledIn) (take choice_i choices))
           unsafePerformIO (print ("compress", i, acc, acc')) `seq` return (acc', bi')
 
-indexToBoard :: Integer -> Board
-indexToBoard idx = fromIncomplete $ snd $ foldl step (idx, emptyBoard) boardIndices
+indexToBoard :: Int -> Board
+indexToBoard idx = fromIncomplete $ snd $ foldl' step (idx, emptyBoard) boardIndices
   where step (acc, bi) i =
           let choices = validCells bi i
               (choice, prev_sum) = find_choice 0 0 choices
