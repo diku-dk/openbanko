@@ -21,7 +21,7 @@ unsigned int a5_huffman_decode(FILE *in, size_t maplen, const char** map_in) {
       return EOF;
     }
 
-    int hit, hits = 0;
+    int hit = 0, hits = 0;
     for (size_t i = 0; i < maplen; i++) {
       if (map[i] == NULL) {
         continue;
