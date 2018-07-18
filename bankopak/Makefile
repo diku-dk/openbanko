@@ -16,9 +16,6 @@ TESTFILE=../boards/1000_boards.bankopladeformat
 
 # MAKEFILES SUCK
 test_bankopak_%: bankopak
-	@echo "Testing algorithm $(subst test_bankopak_,,$@)";
-	@cat $(TESTFILE) | \
-	  ./bankopak -c $(subst test_bankopak_,,$@) | ./bankopak -d $(subst test_bankopak_,,$@) | \
-	  ../bankopladeformat/bankocmp /dev/stdin $(TESTFILE); \
+	@bash ./test.sh $(subst test_bankopak_,,$@) $(TESTFILE)
 
 test: test_bankopak_0 test_bankopak_1 test_bankopak_2 test_bankopak_3 test_bankopak_4 test_bankopak_5 test_bankopak_6 test_bankopak_7
