@@ -5,12 +5,13 @@ import Numeric (showIntAtBase)
 import Data.Char (intToDigit)
 
 import Bankotrav.Types
+import Bankotrav.Base
 
 
 formatBoard :: Board -> String
-formatBoard = unlines . map (unwords . map cellFormat) . transpose
-  where cellFormat BlankCell = "00"
-        cellFormat (ValueCell v) = (if length (show v) == 1 then "0" else "") ++ show v
+formatBoard = unlines . map (unwords . map formatCell) . transpose . boardToList
+  where formatCell BlankCell = "00"
+        formatCell (ValueCell v) = (if length (show v) == 1 then "0" else "") ++ show v
 
 formatBinary :: Int -> String
 formatBinary i = showIntAtBase 2 intToDigit i ""

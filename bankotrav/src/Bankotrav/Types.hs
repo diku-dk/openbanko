@@ -1,80 +1,71 @@
 module Bankotrav.Types where
 
-import Safe (atMay)
+import qualified Data.Array.IArray as A
+import Data.Array.IArray ((!), (//))
 
 
 data Cell = BlankCell
-          | ValueCell Int
+          | ValueCell !Int
   deriving (Show, Eq)
 
 data CellIncomplete = NotFilledIn
-                    | FilledIn Cell
+                    | FilledIn !Cell
   deriving (Show)
 
-hasValue :: CellIncomplete -> Bool
-hasValue NotFilledIn = False
-hasValue (FilledIn BlankCell) = False
-hasValue _ = True
-
 type CellIndex = (Int, Int)
+type BoardBase cell = A.Array CellIndex cell -- 9 columns * 3 rows
 
-type BoardBase cell = [[cell]] -- 9 columns * 3 rows
 type Board = BoardBase Cell -- Complete board
 type BoardIncomplete = BoardBase CellIncomplete -- Board in creation
 
-getCell :: BoardBase cell -> CellIndex -> Maybe cell
-getCell board (column, row) = do
-  elems <- atMay board column
-  atMay elems row
-
-setCell :: BoardBase cell -> CellIndex -> cell -> BoardBase cell
-setCell board (column, row) cell =
-  let elems = board !! column
-      elems' = take row elems ++ [cell] ++ drop (row + 1) elems
-  in take column board ++
-     [elems'] ++
-     drop (column + 1) board
-
-type Column cell = (cell, cell, cell)
-
-getColumn :: BoardBase cell -> Int -> Column cell
-getColumn board i = (col !! 0, col !! 1, col !! 2)
-  where col = board !! i
-
-isFilledIn :: CellIncomplete -> Bool
-isFilledIn NotFilledIn = False
-isFilledIn _ = True
-
-isFilledInBlank :: CellIncomplete -> Bool
-isFilledInBlank (FilledIn BlankCell) = True
-isFilledInBlank _ = False
-
-
-
+type Column cell = (cell, cell, cell) -- Nicer representation for single columns
 
 data ColumnKind = ThreeCells | TwoCells | OneCell
   deriving (Show, Eq)
 
-type ColumnBoardKind = [ColumnKind] -- 9 columns
+type BoardKind = [ColumnKind] -- 9 columns
 
-data CellKind = Number | Blank
-  deriving (Show)
-
-isNumber :: CellKind -> Bool
-isNumber Number = True
-isNumber Blank = False
-
-
+-- | (three-number columns, two-number columns, one-number columns)
 type ColumnSignature = (Int, Int, Int)
 
+data CellType = Number | Blank
+  deriving (Show)
+
+type ColumnPerm = (CellType, CellType, CellType)
+type BoardPerm = [ColumnPerm] -- 9 columns
 
 
-type ColumnPerm = (CellKind, CellKind, CellKind)
-type ColumnBoardPerm = [ColumnPerm] -- 9 columns
+getCell :: BoardBase cell -> CellIndex -> cell
+getCell = (!)
 
+getCellMay :: BoardBase cell -> CellIndex -> Maybe cell
+getCellMay board i =
+  let (start, end) = A.bounds board
+  in if i < start || i > end
+     then Nothing
+     else Just $ getCell board i
 
+setCell :: BoardIncomplete -> CellIndex -> Cell -> BoardIncomplete
+setCell board i cell = setCell' board i $ FilledIn cell
 
-fromIncomplete :: BoardIncomplete -> Board
-fromIncomplete = map (map from')
-  where from' (FilledIn v) = v
-        from' NotFilledIn = error "not fully filled in"
+setCell' :: BoardBase cell -> CellIndex -> cell -> BoardBase cell
+setCell' board i cell = board // [(i, cell)]
+
+getColumn :: BoardBase cell -> Int -> Column cell
+getColumn board i = (board ! (i, 0), board ! (i, 1), board ! (i, 2))
+
+isFilledIn :: CellIncomplete -> Bool
+isFilledIn (FilledIn (ValueCell _)) = True
+isFilledIn _ = False
+
+isFilledIn' :: CellIncomplete -> Bool
+isFilledIn' (FilledIn _) = True
+isFilledIn' _ = False
+
+isBlank :: CellIncomplete -> Bool
+isBlank (FilledIn BlankCell) = True
+isBlank _ = False
+
+typeIsNumber :: CellType -> Bool
+typeIsNumber Number = True
+typeIsNumber Blank = False
