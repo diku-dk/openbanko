@@ -7,51 +7,9 @@
 #include "bitio.h"
 #include "algorithm_6.h"
 
-#define A7_MASK_INDEX_BITS 20
-#define A7_MASK_BITS 27
-
 // Mask is least significant 27 bits.
-int32_t masks[1<<A7_MASK_INDEX_BITS] = { 0 };
-int32_t mask_to_index[1<<A7_MASK_BITS] = { -1 };
-
-static void calculate_masks() {
-  int mask_index = 0;
-
-  for (int i = 0; i < BOARD_ROW_PERMUTATIONS_SIZE; i++) {
-    for (int j = 0; j < BOARD_ROW_PERMUTATIONS_SIZE; j++) {
-      for (int l = 0; l < BOARD_ROW_PERMUTATIONS_SIZE; l++) {
-        struct board b;
-        for (int p = 0; p < BOARD_COLS; p++) {
-          b.cells[0][p] = a6_row_mask_permutations[i][p];
-        }
-        for (int p = 0; p < BOARD_COLS; p++) {
-          b.cells[1][p] = a6_row_mask_permutations[j][p];
-        }
-        for (int p = 0; p < BOARD_COLS; p++) {
-          b.cells[2][p] = a6_row_mask_permutations[l][p];
-        }
-
-        int ok = 1;
-        for (int j = 0; j < BOARD_COLS; j++) {
-          if (b.cells[0][j] == 0 &&
-              b.cells[1][j] == 0 &&
-              b.cells[2][j] == 0) {
-            ok = 0;
-          }
-        }
-
-        if (!ok) {
-          continue;
-        }
-
-        int mask = banko_board_mask(&b);
-        masks[mask_index] = mask;
-        mask_to_index[mask] = mask_index;
-        mask_index++;
-      }
-    }
-  }
-}
+int32_t masks[1<<BANKO_MASK_INDEX_BITS] = { 0 };
+int32_t mask_to_index[1<<BANKO_MASK_BITS] = { -1 };
 
 static int a7_make_board_mask_index(const struct board src_board) {
   return mask_to_index[banko_board_mask(&src_board)];
@@ -92,7 +50,7 @@ static int a7_read_mask_index(FILE *in, int cur_mask_id) {
 }
 
 void a7_compress(FILE *out, FILE *in) {
-  calculate_masks();
+  banko_calculate_masks(masks, mask_to_index);
 
   struct board board;
   struct banko_reader reader;
@@ -131,7 +89,7 @@ void a7_compress(FILE *out, FILE *in) {
 }
 
 void a7_decompress(FILE *out, FILE *in) {
-  calculate_masks();
+  banko_calculate_masks(masks, mask_to_index);
 
   struct board board;
   struct banko_writer writer;
