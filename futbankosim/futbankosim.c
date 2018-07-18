@@ -139,9 +139,9 @@ int main(int argc, char** argv) {
   for (int i = 0; i < ngames; i++) {
     if (verbose) {
       printf("Game %10d: board %d won (board %d first to one row; board %d first to two rows)\n",
-             i, one_row_winners[i], two_rows_winners[i], three_rows_winners[i]);
+             i, two_rows_winners[i], three_rows_winners[i], one_row_winners[i]);
     }
-    num_wins[one_row_winners[i]]++;
+    num_wins[three_rows_winners[i]]++;
   }
 
   printf("Wins per board:\n");
