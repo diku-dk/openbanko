@@ -65,7 +65,3 @@ isFilledIn' _ = False
 isBlank :: CellIncomplete -> Bool
 isBlank (FilledIn BlankCell) = True
 isBlank _ = False
-
-typeIsNumber :: CellType -> Bool
-typeIsNumber Number = True
-typeIsNumber Blank = False

@@ -1,7 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 module Bankotrav.Base where
 
-import Data.List (transpose, groupBy)
+import Data.List (groupBy)
 import qualified Data.Array.IArray as A
 
 import Bankotrav.Types
@@ -45,14 +45,15 @@ validColumnSignatures = [ (3, 0, 6)
                         ]
 
 boardKindPermutations :: BoardKind -> [BoardPerm]
-boardKindPermutations = filter valid . perms . map columnKindPermutations
-  where perms :: [[ColumnPerm]] -> [BoardPerm]
-        perms (pos : poss) = concatMap (\t -> map (t :) $ perms poss) pos
-        perms [] = [[]]
-
-        valid :: BoardPerm -> Bool
-        valid = all ((== 5) . length . filter typeIsNumber) . transpose .
-                map (\(a, b, c) -> [a, b, c])
+boardKindPermutations = perms (5, 5, 5) . map columnKindPermutations
+  where perms :: (Int, Int, Int) -> [[ColumnPerm]] -> [BoardPerm]
+        perms (0, 0, 0) [] = [[]]
+        perms (0, 0, 0) _ = []
+        perms _ [] = []
+        perms (ra, rb, rc) (pos : poss) = concatMap (\t -> map (t :) $ perms (rems' t) poss) pos
+          where rems' (ta, tb, tc) = (calc (ra, ta), calc (rb, tb), calc (rc, tc))
+                calc (r, Blank) = r
+                calc (r, Number) = r - 1
 
 columnKindPermutations :: ColumnKind -> [ColumnPerm]
 columnKindPermutations kind = case kind of
