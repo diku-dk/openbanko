@@ -35,3 +35,10 @@ If you use any of this code for research, please cite it as:
       institution = {EggsML}
       year = {2015--2018}
     }
+
+## In case of addiction
+
+The OpenBanko project recognises that gambling can be a significant
+harmful influence.  If you find that your quality of life is
+negatively impacted by banko, please seek help immediately.  Danes can
+inquire at [Ludomanilinjen](http://www.ludomanilinjen.dk/).
