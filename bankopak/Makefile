@@ -18,4 +18,6 @@ TESTFILE=../boards/1000_boards.bankopladeformat
 test_bankopak_%: bankopak
 	@bash ./test.sh $(subst test_bankopak_,,$@) $(TESTFILE)
 
+.PHONY: test
+
 test: test_bankopak_0 test_bankopak_1 test_bankopak_2 test_bankopak_3 test_bankopak_4 test_bankopak_5 test_bankopak_6 test_bankopak_7
