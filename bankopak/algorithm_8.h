@@ -38,6 +38,7 @@ void a8_compress(FILE *out, FILE *in) {
     }
   }
   flush_bit(out);
+  rust_encoder_free(encoder);
   banko_reader_close(&reader);
 }
 
@@ -58,7 +59,7 @@ void a8_decompress(FILE *out, FILE *in) {
     rust_decoder_run(decoder, idx, &board);
     banko_writer_board(&writer, &board);
   }
-
+  rust_decoder_free(decoder);
   banko_writer_close(&writer);
 }
 
