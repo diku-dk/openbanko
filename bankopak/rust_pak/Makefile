@@ -1,4 +1,4 @@
-all: bins staticlib
+all: bins staticlib example
 
 bins:
 	cd banko-bins && cargo +nightly build --release
@@ -8,6 +8,8 @@ bins:
 staticlib:
 	cd banko-static && cargo +nightly build --release
 	cp banko-static/target/release/libbanko_static.a .
+
+example:
 	gcc static_example.c -o static_example ./libbanko_static.a  -lpthread -ldl -lm
 
 clean:
