@@ -9,6 +9,9 @@
 #include "bankopladeformat/bankopladeformat.h"
 #include "bitio.h"
 
+/* This algorithm compresses a banko board into 62 bits.  This is just a
+   wrapper; the real code is in the rust_pak subdirectory. */
+
 typedef struct _rust_encoder rust_encoder;
 rust_encoder *rust_encoder_init();
 void rust_encoder_free(rust_encoder*);
