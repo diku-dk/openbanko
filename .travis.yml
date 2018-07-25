@@ -53,6 +53,6 @@ install:
   - (cd futbankosim; make)
 
 script:
-  - (cd bankopak; make test)
+  # - (cd bankopak; make test)
   # - (cd barc; stack install)
   # - (cd barc/banko; make test)
