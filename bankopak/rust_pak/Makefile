@@ -1,12 +1,12 @@
 all: bins staticlib example
 
 bins:
-	cd banko-bins && cargo +nightly build --release
+	cd banko-bins && cargo build --release
 	cp banko-bins/target/release/encoder .
 	cp banko-bins/target/release/decoder .
 
 staticlib:
-	cd banko-static && cargo +nightly build --release
+	cd banko-static && cargo build --release
 	cp banko-static/target/release/libbanko_static.a .
 
 example:

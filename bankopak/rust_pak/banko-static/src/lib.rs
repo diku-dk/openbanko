@@ -1,5 +1,3 @@
-#![feature(box_syntax)]
-
 extern crate banko_lib;
 
 use std::u64;
@@ -39,7 +37,7 @@ impl CBankoplade {
 
 #[no_mangle]
 pub extern "C" fn rust_encoder_init() -> *mut banko_lib::Encoder {
-    let result = box banko_lib::Encoder::default();
+    let result: Box<banko_lib::Encoder> = Default::default();
     Box::into_raw(result)
 }
 
@@ -65,7 +63,7 @@ pub extern "C" fn rust_encoder_run(
 
 #[no_mangle]
 pub extern "C" fn rust_decoder_init() -> *mut banko_lib::Decoder {
-    let result = box banko_lib::Decoder::default();
+    let result: Box<banko_lib::Decoder> = Default::default();
     Box::into_raw(result)
 }
 

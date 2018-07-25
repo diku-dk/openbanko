@@ -24,7 +24,11 @@ impl ops::Index<[u8; 3]> for LayoutTable {
 impl Default for LayoutTable {
     #[inline]
     fn default() -> LayoutTable {
-        let mut table = box [[[u64::MAX; 126]; 126]; 126];
+        let table: Vec<[[u64; 126]; 126]> = vec![[[0; 126]; 126]; 126];
+        let table: Box<[[[u64; 126]; 126]]> = table.into_boxed_slice();
+        let table: *mut [[[u64; 126]; 126]] = Box::into_raw(table);
+        let table = table as *mut [[[u64; 126]; 126]; 126];
+        let mut table = unsafe { Box::from_raw(table) };
 
         let mut total_count = 0;
 
