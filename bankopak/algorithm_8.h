@@ -12,6 +12,23 @@
 /* This algorithm compresses a banko board into 62 bits.  This is just a
    wrapper; the real code is in the rust_pak subdirectory. */
 
+#ifdef DISABLE_RUST
+
+void a8_disabled() {
+  fputs("rust_pak integration disabled in this build, sorry\n", stderr);
+  exit(1);
+}
+
+void a8_compress(__attribute__((unused)) FILE *out, __attribute__((unused)) FILE *in) {
+  a8_disabled();
+}
+
+void a8_decompress(__attribute__((unused)) FILE *out, __attribute__((unused)) FILE *in) {
+  a8_disabled();
+}
+
+#else
+
 typedef struct _rust_encoder rust_encoder;
 rust_encoder *rust_encoder_init();
 void rust_encoder_free(rust_encoder*);
@@ -63,4 +80,5 @@ void a8_decompress(FILE *out, FILE *in) {
   banko_writer_close(&writer);
 }
 
+#endif
 #endif

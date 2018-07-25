@@ -7,10 +7,17 @@ ALGORITHMS+=algorithm_8.h
 
 
 bankopak: bankopak.c $(ALGORITHMS) bitio.h rust_pak/libbanko_static.a
+ifeq ($(DISABLE_RUST),1)
+	$(CC) -DDISABLE_RUST -o $@ $< $(CFLAGS)
+else
 	$(CC) -o $@ $< rust_pak/libbanko_static.a $(CFLAGS)
+endif
 
 rust_pak/libbanko_static.a:
+ifeq ($(DISABLE_RUST),1)
+else
 	$(MAKE) -C rust_pak staticlib
+endif
 
 clean:
 	rm -f bankopak
