@@ -1,0 +1,10 @@
+[package]
+name = "banko-lib"
+version = "0.1.0"
+authors = ["Mathias Svensson <freaken@freaken.dk>"]
+
+[dependencies]
+typenum = "1.10.0"
+generic-array = "0.11.1"
+num-integer = "0.1.39"
+nom = "4.0.0"

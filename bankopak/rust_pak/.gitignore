@@ -1,0 +1,7 @@
+**/target
+**/*.rs.bk
+**/Cargo.lock
+encoder
+decoder
+libbanko_static.a
+static_example

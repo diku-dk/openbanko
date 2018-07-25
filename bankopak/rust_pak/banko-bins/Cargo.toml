@@ -1,0 +1,16 @@
+[package]
+name = "banko-bins"
+version = "0.1.0"
+authors = ["Mathias Svensson <freaken@freaken.dk>"]
+
+[[bin]]
+name = "encoder"
+path = "src/encoder.rs"
+
+[[bin]]
+name = "decoder"
+path = "src/decoder.rs"
+
+[dependencies]
+byteorder = "1.2.3"
+banko-lib = { path = "../banko-lib" }

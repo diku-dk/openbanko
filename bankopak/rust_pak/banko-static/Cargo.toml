@@ -1,0 +1,10 @@
+[package]
+name = "banko-static"
+version = "0.1.0"
+authors = ["Mathias Svensson <freaken@freaken.dk>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+banko-lib = { path = "../banko-lib" }
