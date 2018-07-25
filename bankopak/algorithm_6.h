@@ -3,9 +3,9 @@
 
 #include "bankopladeformat/bankopladeformat.h"
 #include "bitio.h"
-#include "algorithm_6_row_mask_permutations.h"
 
 
+#define A6_BOARD_ROW_PERMUTATIONS_BIT_SIZE 7 /* lg(126) */
 #define A6_BOARD_NUMBERS_PER_ROW_SIZE 5
 #define A6_ARITHMETIC_CODING_BASE (11 * 10 * 10 * 10 * 10)
 #define A6_BOARD_COMPRESSED_MAX_BITS_SIZE 51
@@ -17,7 +17,7 @@ typedef struct {
 } a6_mask_t;
 
 typedef struct {
-  bit_t cells[BOARD_ROWS][BOARD_ROW_PERMUTATIONS_BIT_SIZE];
+  bit_t cells[BOARD_ROWS][A6_BOARD_ROW_PERMUTATIONS_BIT_SIZE];
 } a6_mask_compr_t;
 
 typedef struct {
@@ -48,13 +48,13 @@ static void a6_compress_board_mask
     for (int i = 0; i < BOARD_ROW_PERMUTATIONS_SIZE; i++) {
       match = 1;
       for (int col = 0; col < BOARD_COLS; col++) {
-        if (a6_row_mask_permutations[i][col] != src_mask.cells[row][col]) {
+        if (row_mask_permutations[i][col] != src_mask.cells[row][col]) {
           match = 0;
           break;
         }
       }
       if (match) {
-        for (int j = 0; j < BOARD_ROW_PERMUTATIONS_BIT_SIZE; j++) {
+        for (int j = 0; j < A6_BOARD_ROW_PERMUTATIONS_BIT_SIZE; j++) {
           dest_compr->cells[row][j] = (i >> j) & 1;
         }
         break;
@@ -71,11 +71,11 @@ static void a6_uncompress_board_mask
   uint8_t index_temp;
   for (int row = 0; row < BOARD_ROWS; row++) {
     index_temp = 0;
-    for (int i = 0; i < BOARD_ROW_PERMUTATIONS_BIT_SIZE; i++) {
+    for (int i = 0; i < A6_BOARD_ROW_PERMUTATIONS_BIT_SIZE; i++) {
       index_temp |= src_compr.cells[row][i] << i;
     }
     for (int col = 0; col < BOARD_COLS; col++) {
-      dest_mask->cells[row][col] = a6_row_mask_permutations[index_temp][col];
+      dest_mask->cells[row][col] = row_mask_permutations[index_temp][col];
     }
   }
 }
@@ -193,7 +193,7 @@ void a6_compress(FILE *out, FILE *in) {
     number_code = a6_arithmetic_encode(row_values);
 
     for (int row = 0; row < BOARD_ROWS; row++) {
-      for (int i = 0; i < BOARD_ROW_PERMUTATIONS_BIT_SIZE; i++) {
+      for (int i = 0; i < A6_BOARD_ROW_PERMUTATIONS_BIT_SIZE; i++) {
         write_bit(board_mask_compressed.cells[row][i], out);
       }
     }
@@ -222,7 +222,7 @@ void a6_decompress(FILE *out, FILE *in) {
   uint64_t mask_temp;
   while (1) {
     for (int row = 0; row < BOARD_ROWS; row++) {
-      for (int i = 0; i < BOARD_ROW_PERMUTATIONS_BIT_SIZE; i++) {
+      for (int i = 0; i < A6_BOARD_ROW_PERMUTATIONS_BIT_SIZE; i++) {
         bit_temp = read_bit(in);
         if (bit_temp == EOF) {
           goto loop_exit;
