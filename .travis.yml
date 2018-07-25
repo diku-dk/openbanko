@@ -46,13 +46,13 @@ install:
   - pwd
   - ls
   - (cd bankopladeformat; make)
-  # - (cd bankopak; make)
+  - (cd bankopak; DISABLE_RUST=1 make)
   - (cd bankoviser; make)
   - (cd bankoconv; make)
   # - (cd barc; stack build --fast)
   - (cd futbankosim; make)
 
 script:
-  # - (cd bankopak; make test)
+  - (cd bankopak; DISABLE_RUST=1 make test)
   # - (cd barc; stack install)
   # - (cd barc/banko; make test)
