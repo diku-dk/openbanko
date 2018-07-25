@@ -31,7 +31,12 @@ test_bankopak_%: bankopak
 
 .PHONY: test
 
-test: ../bankopladeformat/bankocmp test_bankopak_0 test_bankopak_1 test_bankopak_2 test_bankopak_3 test_bankopak_4 test_bankopak_5 test_bankopak_6 test_bankopak_7 test_bankopak_8
+test_numbers=test_bankopak_0 test_bankopak_1 test_bankopak_2 test_bankopak_3 test_bankopak_4 test_bankopak_5 test_bankopak_6 test_bankopak_7
+ifeq ($(DISABLE_RUST),1)
+else
+test_numbers+=test_bankopak_8
+endif
+test: ../bankopladeformat/bankocmp $(test_numbers)
 
 ../bankopladeformat/bankocmp:
 	$(MAKE) -C ../bankopladeformat
