@@ -10,7 +10,7 @@ staticlib:
 	cp banko-static/target/release/libbanko_static.a .
 
 example:
-	gcc static_example.c -o static_example ./libbanko_static.a  -lpthread -ldl -lm
+	gcc static_example.c -o static_example ./libbanko_static.a -lpthread -ldl
 
 clean:
 	cd banko-bins && cargo clean

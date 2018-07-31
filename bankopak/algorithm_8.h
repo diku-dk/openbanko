@@ -48,10 +48,11 @@ void a8_compress(FILE *out, FILE *in) {
 
   banko_reader_open(&reader, in);
   while (banko_reader_board(&reader, &board) == 0) {
-    rust_encoder_run(encoder, &board, &idx);
-
-    for (int i = 61; i >= 0; i--) {
-      write_bit((idx >> i) & 1, out);
+    // Skip any invalid boards
+    if (rust_encoder_run(encoder, &board, &idx)) {
+      for (int i = 61; i >= 0; i--) {
+        write_bit((idx >> i) & 1, out);
+      }
     }
   }
   flush_bit(out);
@@ -73,8 +74,10 @@ void a8_decompress(FILE *out, FILE *in) {
       idx = (idx << 1) | read_bit(in);
     }
 
-    rust_decoder_run(decoder, idx, &board);
-    banko_writer_board(&writer, &board);
+    // Skip any invalid boards
+    if (rust_decoder_run(decoder, idx, &board)) {
+      banko_writer_board(&writer, &board);
+    }
   }
   rust_decoder_free(decoder);
   banko_writer_close(&writer);

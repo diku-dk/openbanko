@@ -26,13 +26,9 @@ pub struct OffsetTable {
 
 impl OffsetTable {
     #[inline]
-    pub fn get(&self, offset: u64) -> (u64, [u8; 9]) {
-        let (&result_offset, indexes) = self
-            .table
-            .range(..=offset)
-            .next_back()
-            .expect("Invalid index");
-        (offset - result_offset, indexes.expand())
+    pub fn get(&self, offset: u64) -> Option<(u64, [u8; 9])> {
+        let (&result_offset, indexes) = self.table.range(..=offset).next_back()?;
+        Some((offset - result_offset, indexes.expand()))
     }
 }
 

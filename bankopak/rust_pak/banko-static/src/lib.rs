@@ -3,6 +3,7 @@ extern crate banko_lib;
 use std::u64;
 
 #[repr(C)]
+#[derive(Default)]
 pub struct CBankoplade {
     cells: [[u8; 9]; 3],
 }
@@ -54,8 +55,13 @@ pub extern "C" fn rust_encoder_run(
 ) -> bool {
     match unsafe { (encoder.as_ref(), in_plade.as_ref(), out_u64.as_mut()) } {
         (Some(encoder), Some(in_plade), Some(out_u64)) => {
-            *out_u64 = encoder.encode(&in_plade.to_rust());
-            true
+            if let Some(out) = encoder.encode(&in_plade.to_rust()) {
+                *out_u64 = out;
+                true
+            } else {
+                *out_u64 = u64::MAX;
+                false
+            }
         }
         _ => false,
     }
@@ -80,8 +86,15 @@ pub extern "C" fn rust_decoder_run(
 ) -> bool {
     match unsafe { (decoder.as_ref(), out_plade.as_mut()) } {
         (Some(decoder), Some(out_plade)) => {
-            *out_plade = CBankoplade::from_rust(&decoder.decode(in_u64));
-            true
+            let plade = decoder.decode(in_u64).as_ref().map(CBankoplade::from_rust);
+
+            if let Some(plade) = plade {
+                *out_plade = plade;
+                true
+            } else {
+                *out_plade = Default::default();
+                false
+            }
         }
         _ => false,
     }

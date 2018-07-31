@@ -1,5 +1,4 @@
 use combinations::Combination;
-use std::ops;
 use std::u64;
 use typenum::consts::*;
 
@@ -7,17 +6,20 @@ pub struct LayoutTable {
     table: Box<[[[u64; 126]; 126]; 126]>,
 }
 
-impl ops::Index<[u8; 3]> for LayoutTable {
-    type Output = u64;
+impl LayoutTable {
     #[inline]
-    fn index(&self, index: [u8; 3]) -> &u64 {
-        let result = &self.table[index[0] as usize][index[1] as usize][index[2] as usize];
+    pub fn get(&self, row0: u8, row1: u8, row2: u8) -> Option<u64> {
+        if row0 >= 126 || row1 >= 126 || row2 >= 126 {
+            None
+        } else {
+            let result = self.table[row0 as usize][row1 as usize][row2 as usize];
 
-        if *result == u64::MAX {
-            panic!("Invalid index {:?}", index);
+            if result == u64::MAX {
+                None
+            } else {
+                Some(result)
+            }
         }
-
-        result
     }
 }
 

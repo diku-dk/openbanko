@@ -1,116 +1,111 @@
 use combinations::Combination;
 use generic_array::sequence::GenericSequence;
 use generic_array::GenericArray;
-use std::ops;
 use typenum::consts::*;
 
 pub struct ColumnTable {
-    table: GenericArray<GenericArray<Option<Box<[(u8, u8, u8)]>>, U8>, U9>,
+    table: GenericArray<GenericArray<Box<[(u8, u8, u8)]>, U7>, U9>,
 }
 
-impl ops::Index<[u8; 2]> for ColumnTable {
-    type Output = [(u8, u8, u8)];
+impl ColumnTable {
     #[inline]
-    fn index(&self, index: [u8; 2]) -> &[(u8, u8, u8)] {
-        if index[1] == 0 {
-            panic!("Invalid index {:?}", index);
+    pub fn get(&self, col: usize, bit_index: u8) -> Option<&[(u8, u8, u8)]> {
+        if col >= 9 || bit_index == 0 || bit_index >= 8 {
+            None
+        } else {
+            Some(&self.table[col][bit_index as usize - 1])
         }
-        self.table[index[0] as usize][index[1] as usize]
-            .as_ref()
-            .unwrap()
     }
 }
 
 impl Default for ColumnTable {
     #[inline]
     fn default() -> ColumnTable {
-        let mut table: GenericArray<GenericArray<Option<Box<[(u8, u8, u8)]>>, U8>, U9> =
-            GenericArray::generate(|_| GenericArray::generate(|_| None));
+        fn gen(col: usize, bit_index: usize) -> Box<[(u8, u8, u8)]> {
+            match (col, bit_index) {
+                (0, 0) => Combination::<U8, U1>::new()
+                    .map(|v| (v[0] + 1, 0, 0))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (0, 1) => Combination::<U8, U1>::new()
+                    .map(|v| (0, v[0] + 1, 0))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (0, 2) => Combination::<U8, U2>::new()
+                    .map(|v| (v[0] + 1, v[1] + 1, 0))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (0, 3) => Combination::<U8, U1>::new()
+                    .map(|v| (0, 0, v[0] + 1))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (0, 4) => Combination::<U8, U2>::new()
+                    .map(|v| (v[0] + 1, 0, v[1] + 1))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (0, 5) => Combination::<U8, U2>::new()
+                    .map(|v| (0, v[0] + 1, v[1] + 1))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (0, 6) => Combination::<U8, U3>::new()
+                    .map(|v| (v[0] + 1, v[1] + 1, v[2] + 1))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
 
-        table[0][0] = None;
-        table[0][1] = Some(
-            Combination::<U8, U1>::new()
-                .map(|v| (v[0] + 1, 0, 0))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[0][2] = Some(
-            Combination::<U8, U1>::new()
-                .map(|v| (0, v[0] + 1, 0))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[0][3] = Some(
-            Combination::<U8, U2>::new()
-                .map(|v| (v[0] + 1, v[1] + 1, 0))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[0][4] = Some(
-            Combination::<U8, U1>::new()
-                .map(|v| (0, 0, v[0] + 1))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[0][5] = Some(
-            Combination::<U8, U2>::new()
-                .map(|v| (v[0] + 1, 0, v[1] + 1))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[0][6] = Some(
-            Combination::<U8, U2>::new()
-                .map(|v| (0, v[0] + 1, v[1] + 1))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[0][7] = Some(
-            Combination::<U8, U3>::new()
-                .map(|v| (v[0] + 1, v[1] + 1, v[2] + 1))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
+                (8, 0) => Combination::<U10, U1>::new()
+                    .map(|v| (v[0] + 80, 0, 0))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (8, 1) => Combination::<U10, U1>::new()
+                    .map(|v| (0, v[0] + 80, 0))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (8, 2) => Combination::<U10, U2>::new()
+                    .map(|v| (v[0] + 80, v[1] + 80, 0))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (8, 3) => Combination::<U10, U1>::new()
+                    .map(|v| (0, 0, v[0] + 80))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (8, 4) => Combination::<U10, U2>::new()
+                    .map(|v| (v[0] + 80, 0, v[1] + 80))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (8, 5) => Combination::<U10, U2>::new()
+                    .map(|v| (0, v[0] + 80, v[1] + 80))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+                (8, 6) => Combination::<U10, U3>::new()
+                    .map(|v| (v[0] + 80, v[1] + 80, v[2] + 80))
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
 
-        for n in 1..8 {
-            table[n][0] = None;
-            table[n][1] = Some(
-                Combination::<U9, U1>::new()
+                (n, 0) => Combination::<U9, U1>::new()
                     .map(|v| (v[0] + 10 * n as u8, 0, 0))
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
-            table[n][2] = Some(
-                Combination::<U9, U1>::new()
+                (n, 1) => Combination::<U9, U1>::new()
                     .map(|v| (0, v[0] + 10 * n as u8, 0))
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
-            table[n][3] = Some(
-                Combination::<U9, U2>::new()
+                (n, 2) => Combination::<U9, U2>::new()
                     .map(|v| (v[0] + 10 * n as u8, v[1] + 10 * n as u8, 0))
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
-            table[n][4] = Some(
-                Combination::<U9, U1>::new()
+                (n, 3) => Combination::<U9, U1>::new()
                     .map(|v| (0, 0, v[0] + 10 * n as u8))
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
-            table[n][5] = Some(
-                Combination::<U9, U2>::new()
+                (n, 4) => Combination::<U9, U2>::new()
                     .map(|v| (v[0] + 10 * n as u8, 0, v[1] + 10 * n as u8))
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
-            table[n][6] = Some(
-                Combination::<U9, U2>::new()
+                (n, 5) => Combination::<U9, U2>::new()
                     .map(|v| (0, v[0] + 10 * n as u8, v[1] + 10 * n as u8))
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
-            table[n][7] = Some(
-                Combination::<U9, U3>::new()
+                (n, 6) => Combination::<U9, U3>::new()
                     .map(|v| {
                         (
                             v[0] + 10 * n as u8,
@@ -120,52 +115,12 @@ impl Default for ColumnTable {
                     })
                     .collect::<Vec<_>>()
                     .into_boxed_slice(),
-            );
+                _ => panic!("impossible {} {}", col, bit_index),
+            }
         }
 
-        table[8][0] = None;
-        table[8][1] = Some(
-            Combination::<U10, U1>::new()
-                .map(|v| (v[0] + 80, 0, 0))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[8][2] = Some(
-            Combination::<U10, U1>::new()
-                .map(|v| (0, v[0] + 80, 0))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[8][3] = Some(
-            Combination::<U10, U2>::new()
-                .map(|v| (v[0] + 80, v[1] + 80, 0))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[8][4] = Some(
-            Combination::<U10, U1>::new()
-                .map(|v| (0, 0, v[0] + 80))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[8][5] = Some(
-            Combination::<U10, U2>::new()
-                .map(|v| (v[0] + 80, 0, v[1] + 80))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[8][6] = Some(
-            Combination::<U10, U2>::new()
-                .map(|v| (0, v[0] + 80, v[1] + 80))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        table[8][7] = Some(
-            Combination::<U10, U3>::new()
-                .map(|v| (v[0] + 80, v[1] + 80, v[2] + 80))
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
+        let table: GenericArray<GenericArray<Box<[(u8, u8, u8)]>, U7>, U9> =
+            GenericArray::generate(|col| GenericArray::generate(|bit_index| gen(col, bit_index)));
 
         ColumnTable { table }
     }

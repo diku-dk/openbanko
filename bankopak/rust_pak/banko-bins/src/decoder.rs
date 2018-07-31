@@ -13,7 +13,7 @@ fn main() {
     loop {
         match reader.read_u64::<LittleEndian>() {
             Ok(n) => {
-                let plade = decoder.decode(n);
+                let plade = decoder.decode(n).expect("invalid board");
                 plade.print();
             }
             Err(ref e) if e.kind() == ErrorKind::UnexpectedEof => {

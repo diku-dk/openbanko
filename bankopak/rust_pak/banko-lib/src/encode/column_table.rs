@@ -1,5 +1,4 @@
 use combinations::Combination;
-use std::ops;
 use std::u8;
 use typenum::consts::*;
 
@@ -22,88 +21,106 @@ pub struct ColumnTable {
     table8: ColumnTable8,
 }
 
-impl ops::Index<[u8; 3]> for ColumnTable0 {
-    type Output = (u8, u8);
+impl ColumnTable0 {
     #[inline]
-    fn index(&self, index: [u8; 3]) -> &(u8, u8) {
-        let result = &self.table[index[0] as usize][index[1] as usize][index[2] as usize];
+    fn get(&self, row0: u8, row1: u8, row2: u8) -> Option<(u8, u8)> {
+        if row0 >= 10 || row1 >= 10 || row2 >= 10 {
+            None
+        } else {
+            let result = self.table[row0 as usize][row1 as usize][row2 as usize];
 
-        if result.0 == u8::MAX {
-            panic!("Invalid index {:?}", index);
+            if result.0 == u8::MAX {
+                None
+            } else {
+                Some(result)
+            }
         }
-
-        result
     }
 }
 
-impl ops::Index<[u8; 3]> for ColumnTableN {
-    type Output = (u8, u8);
+impl ColumnTableN {
     #[inline]
-    fn index(&self, index: [u8; 3]) -> &(u8, u8) {
-        let result = &self.table[index[0] as usize][index[1] as usize][index[2] as usize];
+    fn get(&self, row0: u8, row1: u8, row2: u8) -> Option<(u8, u8)> {
+        if row0 >= 11 || row1 >= 11 || row2 >= 11 {
+            None
+        } else {
+            let result = self.table[row0 as usize][row1 as usize][row2 as usize];
 
-        if result.0 == u8::MAX {
-            panic!("Invalid index {:?}", index);
+            if result.0 == u8::MAX {
+                None
+            } else {
+                Some(result)
+            }
         }
-
-        result
     }
 }
 
-impl ops::Index<[u8; 3]> for ColumnTable8 {
-    type Output = (u8, u8);
+impl ColumnTable8 {
     #[inline]
-    fn index(&self, index: [u8; 3]) -> &(u8, u8) {
-        let result = &self.table[index[0] as usize][index[1] as usize][index[2] as usize];
+    fn get(&self, row0: u8, row1: u8, row2: u8) -> Option<(u8, u8)> {
+        if row0 >= 12 || row1 >= 12 || row2 >= 12 {
+            None
+        } else {
+            let result = self.table[row0 as usize][row1 as usize][row2 as usize];
 
-        if result.0 == u8::MAX {
-            panic!("Invalid index {:?}", index);
+            if result.0 == u8::MAX {
+                None
+            } else {
+                Some(result)
+            }
         }
-
-        result
     }
 }
 
-impl ops::Index<(u8, [Option<u8>; 3])> for ColumnTable {
-    type Output = (u8, u8);
+impl ColumnTable {
     #[inline]
-    fn index(&self, index: (u8, [Option<u8>; 3])) -> &(u8, u8) {
-        let (table, index) = index;
-
-        let sub = match table {
+    pub fn get(
+        &self,
+        col: usize,
+        row0: Option<u8>,
+        row1: Option<u8>,
+        row2: Option<u8>,
+    ) -> Option<(u8, u8)> {
+        let sub = match col {
             0 => 0,
-            n if n <= 8 => 10 * n - 1,
-            _ => panic!("Invalid index {:?}", (table, index)),
+            n if n <= 8 => 10 * n as u8 - 1,
+            _ => panic!("Invalid index {:?}", (col, row0, row1, row2)),
         };
 
-        let index = [
-            index[0]
-                .map(|value| {
-                    let value = value.checked_sub(sub).expect("Invalid index");
-                    assert!(value > 0, "Invalid index");
-                    value
-                })
-                .unwrap_or(0),
-            index[1]
-                .map(|value| {
-                    let value = value.checked_sub(sub).expect("Invalid index");
-                    assert!(value > 0, "Invalid index");
-                    value
-                })
-                .unwrap_or(0),
-            index[2]
-                .map(|value| {
-                    let value = value.checked_sub(sub).expect("Invalid index");
-                    assert!(value > 0, "Invalid index");
-                    value
-                })
-                .unwrap_or(0),
-        ];
+        let row0 = if let Some(row0) = row0 {
+            let row0 = row0.checked_sub(sub)?;
+            if row0 == 0 {
+                return None;
+            }
+            row0
+        } else {
+            0
+        };
 
-        match table {
-            0 => &self.table0[index],
-            8 => &self.table8[index],
-            _ => &self.tablen[index],
+        let row1 = if let Some(row1) = row1 {
+            let row1 = row1.checked_sub(sub)?;
+            if row1 == 0 {
+                return None;
+            }
+            row1
+        } else {
+            0
+        };
+
+        let row2 = if let Some(row2) = row2 {
+            let row2 = row2.checked_sub(sub)?;
+            if row2 == 0 {
+                return None;
+            }
+            row2
+        } else {
+            0
+        };
+
+        match col {
+            0 => self.table0.get(row0, row1, row2),
+            8 => self.table8.get(row0, row1, row2),
+            _ => self.tablen.get(row0, row1, row2),
         }
     }
 }

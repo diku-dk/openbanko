@@ -20,7 +20,7 @@ fn main() {
     let plader = banko_lib::Bankoplade::parse_many(&s).unwrap();
     for plade in plader.iter() {
         writer
-            .write_u64::<LittleEndian>(encoder.encode(plade))
+            .write_u64::<LittleEndian>(encoder.encode(plade).expect("invalid board"))
             .expect("Could not write");
     }
 }

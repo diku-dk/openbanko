@@ -1,5 +1,4 @@
 use combinations::Combination;
-use std::ops;
 use std::u8;
 use typenum::consts::*;
 
@@ -7,18 +6,19 @@ pub struct RowTable {
     table: [[[[[[[[[u8; 2]; 2]; 2]; 2]; 2]; 2]; 2]; 2]; 2],
 }
 
-impl ops::Index<[Option<u8>; 9]> for RowTable {
-    type Output = u8;
+impl RowTable {
     #[inline]
-    fn index(&self, index: [Option<u8>; 9]) -> &u8 {
-        let result = &self.table[index[0].is_some() as usize][index[1].is_some() as usize]
+    pub fn get(&self, index: [Option<u8>; 9]) -> Option<u8> {
+        let result = self.table[index[0].is_some() as usize][index[1].is_some() as usize]
             [index[2].is_some() as usize][index[3].is_some() as usize][index[4].is_some() as usize]
             [index[5].is_some() as usize][index[6].is_some() as usize][index[7].is_some() as usize]
             [index[8].is_some() as usize];
-        if *result == u8::MAX {
-            panic!("Invalid index {:?}", index);
+
+        if result == u8::MAX {
+            None
+        } else {
+            Some(result)
         }
-        result
     }
 }
 
@@ -60,11 +60,11 @@ mod tests {
             }
 
             if count != 5 {
-                continue;
+                assert!(row_table.get(index).is_none());
+            } else {
+                assert_eq!(row_table.get(index), Some(seen));
+                seen += 1;
             }
-
-            assert_eq!(row_table[index], seen);
-            seen += 1;
         }
     }
 }
