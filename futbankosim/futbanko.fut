@@ -10,7 +10,7 @@ let contains (b: board) (c: num) =
     r.1 == c || r.2 == c || r.3 == c || r.4 == c || r.5 == c
   in row_contains b.1 || row_contains b.2 || row_contains b.3
 
-import "/futlib/random"
+import "lib/github.com/diku-dk/cpprandom/random"
 
 module mk_ryst_posen (E: rng_engine): {
   val ryst_posen [n]: E.rng -> (p: [n]num) -> (E.rng, [n]num)

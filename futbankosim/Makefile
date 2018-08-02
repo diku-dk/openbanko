@@ -7,8 +7,11 @@ futbankosim: futbankosim.c futbanko.o
 futbanko.o: futbanko.c
 	gcc $(FUT_CFLAGS) -c $^
 
-futbanko.c: futbanko.fut
-	futhark-opencl --library $^
+futbanko.c: futbanko.fut lib
+	futhark-opencl --library $<
+
+lib:
+	futhark-pkg sync
 
 clean:
 	rm -f futbankosim futbanko.c futbanko.o futbanko.h
