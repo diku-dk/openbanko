@@ -1,6 +1,6 @@
 CC=cc
 CFLAGS=-O2 -std=c99 -Wall -Wextra -pedantic -Wno-unused-function
-EXES=bankopladeformat bankocmp bankosplit bankoanalyse bankosort bankogen
+EXES=bankopladeformat bankocmp bankosplit bankoanalyse bankosort bankogen bankoavg
 
 all: $(EXES)
 
