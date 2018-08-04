@@ -45,6 +45,7 @@ impl Default for RowTable {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::num::NonZeroU8;
 
     #[test]
     fn test_row_table() {
