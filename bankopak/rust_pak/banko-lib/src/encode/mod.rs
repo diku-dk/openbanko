@@ -14,19 +14,16 @@ pub struct Encoder {
 impl Encoder {
     #[inline]
     pub fn encode(&self, plade: &Bankoplade) -> Option<u64> {
-        let row0 = self.row_table.get(plade.rows[0])?;
-        let row1 = self.row_table.get(plade.rows[1])?;
-        let row2 = self.row_table.get(plade.rows[2])?;
-        let mut result = self.layout_table.get(row0, row1, row2)?;
+        let mut rows = plade.rows().map(|row| self.row_table.get(row));
+        let mut result = self
+            .layout_table
+            .get(rows.next()??, rows.next()??, rows.next()??)?;
         let mut multiply = 1;
 
-        for (col_ndx, ((&val0, &val1), &val2)) in plade.rows[0]
-            .iter()
-            .zip(plade.rows[1].iter())
-            .zip(plade.rows[2].iter())
-            .enumerate()
-        {
-            let (value, limit) = self.column_table.get(col_ndx, val0, val1, val2)?;
+        for (col_ndx, column) in plade.columns().enumerate() {
+            let (value, limit) = self
+                .column_table
+                .get(col_ndx, column[0], column[1], column[2])?;
             result += (value as u64) * multiply;
             multiply *= limit as u64;
         }

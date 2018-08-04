@@ -12,6 +12,6 @@ mod combinations;
 mod decode;
 mod encode;
 
-pub use banko::Bankoplade;
+pub use banko::{Bankoplade, Cell, Column, MutColumn, MutRow, Row};
 pub use decode::Decoder;
 pub use encode::Encoder;

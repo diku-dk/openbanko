@@ -1,5 +1,5 @@
+use banko::Cell;
 use combinations::Combination;
-use std::num::NonZeroU8;
 use std::u8;
 use typenum::consts::*;
 
@@ -75,13 +75,7 @@ impl ColumnTable8 {
 
 impl ColumnTable {
     #[inline]
-    pub fn get(
-        &self,
-        col: usize,
-        row0: Option<NonZeroU8>,
-        row1: Option<NonZeroU8>,
-        row2: Option<NonZeroU8>,
-    ) -> Option<(u8, u8)> {
+    pub fn get(&self, col: usize, row0: Cell, row1: Cell, row2: Cell) -> Option<(u8, u8)> {
         let sub = match col {
             0 => 0,
             n if n <= 8 => 10 * n as u8 - 1,

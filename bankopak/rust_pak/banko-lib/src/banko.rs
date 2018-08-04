@@ -4,10 +4,16 @@ use std::num;
 use std::num::NonZeroU8;
 use std::u8;
 
+pub type Cell = Option<NonZeroU8>;
+pub type Row = [Cell; 9];
+pub type MutRow<'a> = [&'a mut Cell; 9];
+pub type Column = [Cell; 3];
+pub type MutColumn<'a> = [&'a mut Cell; 3];
+
 #[derive(Debug, PartialEq, Eq)]
 #[repr(C)]
 pub struct Bankoplade {
-    pub rows: [[Option<NonZeroU8>; 9]; 3],
+    cells: [Row; 3],
 }
 assert_eq_size!(same_as_c; Bankoplade, [u8; 27]);
 
@@ -17,7 +23,7 @@ fn is_felt_char(c: char) -> bool {
 }
 
 #[inline]
-fn from_felt_str(s: CompleteStr) -> Result<Option<NonZeroU8>, num::ParseIntError> {
+fn from_felt_str(s: CompleteStr) -> Result<Cell, num::ParseIntError> {
     let n = s.parse::<u8>()?;
     if n <= 90 {
         Ok(NonZeroU8::new(n))
@@ -26,11 +32,11 @@ fn from_felt_str(s: CompleteStr) -> Result<Option<NonZeroU8>, num::ParseIntError
     }
 }
 
-named!(felt<CompleteStr, Option<NonZeroU8> >,
+named!(felt<CompleteStr, Cell >,
        map_res!(take_while_m_n!(2, 2, is_felt_char), from_felt_str)
 );
 
-named!(bankopladelinje<CompleteStr, [Option<NonZeroU8>; 9]>,
+named!(bankopladelinje<CompleteStr, Row>,
        do_parse!(
            felt0: terminated!(felt, char!(' ')) >>
            felt1: terminated!(felt, char!(' ')) >>
@@ -51,7 +57,7 @@ named!(bankoplade<CompleteStr, Bankoplade>,
            linje1: bankopladelinje >>
            linje2: bankopladelinje >>
            char!('\n') >>
-           (Bankoplade { rows: [linje0, linje1, linje2] })
+           (Bankoplade { cells: [linje0, linje1, linje2] })
        )
 );
 
@@ -59,17 +65,18 @@ named!(bankoplade1<CompleteStr, Bankoplade>, terminated!(bankoplade, eof!()));
 named!(bankoplader<CompleteStr, Vec<Bankoplade>>, terminated!(many1!(bankoplade), eof!()));
 
 impl Bankoplade {
+    #[inline]
     pub fn zero_plade() -> Bankoplade {
         Bankoplade {
-            rows: [[None; 9]; 3],
+            cells: [[None; 9]; 3],
         }
     }
 
     #[inline]
     pub fn print(&self) {
-        for row in &self.rows {
+        for row in self.rows() {
             let mut first = true;
-            for value in row {
+            for value in row.iter() {
                 if first {
                     first = false;
                 } else {
@@ -88,6 +95,38 @@ impl Bankoplade {
     }
 
     #[inline]
+    pub fn rows<'a>(&'a self) -> impl Iterator<Item = Row> + 'a {
+        self.cells.iter().cloned()
+    }
+
+    #[inline]
+    pub fn rows_mut<'a>(&'a mut self) -> impl Iterator<Item = MutRow<'a>> + 'a {
+        self.cells.iter_mut().map(|row| {
+            let &mut [ref mut row0, ref mut row1, ref mut row2, ref mut row3, ref mut row4, ref mut row5, ref mut row6, ref mut row7, ref mut row8] =
+                &mut *row;
+            [row0, row1, row2, row3, row4, row5, row6, row7, row8]
+        })
+    }
+
+    #[inline]
+    pub fn columns<'a>(&'a self) -> impl Iterator<Item = Column> + 'a {
+        self.cells[0]
+            .iter()
+            .zip(self.cells[1].iter())
+            .zip(self.cells[2].iter())
+            .map(|((a, b), c)| [*a, *b, *c])
+    }
+
+    #[inline]
+    pub fn columns_mut<'a>(&'a mut self) -> impl Iterator<Item = MutColumn<'a>> + 'a {
+        let &mut [ref mut row0, ref mut row1, ref mut row2] = &mut self.cells;
+        row0.iter_mut()
+            .zip(row1.iter_mut())
+            .zip(row2.iter_mut())
+            .map(|((a, b), c)| [a, b, c])
+    }
+
+    #[inline]
     pub fn parse1(s: &str) -> Result<Bankoplade, nom::Err<CompleteStr>> {
         Ok(bankoplade1(CompleteStr(s))?.1)
     }
@@ -99,11 +138,13 @@ impl Bankoplade {
 
     #[inline]
     pub fn is_valid(&self) -> bool {
-        for row in &self.rows {
+        for row in self.rows() {
+            // Check that all rows have the proper amount of numbers
             if row.iter().filter_map(|&value| value).count() != 5 {
                 return false;
             }
 
+            // Check that all numbers are within the ranges required
             for (col, &value) in row.iter().enumerate() {
                 let col = col as u8;
                 if let Some(value) = value {
@@ -124,23 +165,20 @@ impl Bankoplade {
             }
         }
 
-        for ((&col1, &col2), &col3) in self.rows[0]
-            .iter()
-            .zip(self.rows[1].iter())
-            .zip(self.rows[2].iter())
-        {
-            let mut last = 0;
+        for column in self.columns() {
+            let mut last = None;
 
-            for &value in &[col1, col2, col3] {
-                if let Some(value) = value {
-                    if value.get() <= last {
-                        return false;
-                    }
-                    last = value.get();
+            for value in column.iter().cloned().filter(Option::is_some) {
+                // Check that all columns are increasing
+                if last <= value {
+                    last = value;
+                } else {
+                    return false;
                 }
             }
 
-            if last == 0 {
+            // Check that all columns contain at least one value
+            if last.is_none() {
                 return false;
             }
         }

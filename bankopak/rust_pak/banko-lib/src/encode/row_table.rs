@@ -1,5 +1,5 @@
+use banko::Row;
 use combinations::Combination;
-use std::num::NonZeroU8;
 use std::u8;
 use typenum::consts::*;
 
@@ -9,7 +9,7 @@ pub struct RowTable {
 
 impl RowTable {
     #[inline]
-    pub fn get(&self, index: [Option<NonZeroU8>; 9]) -> Option<u8> {
+    pub fn get(&self, index: Row) -> Option<u8> {
         let result = self.table[index[0].is_some() as usize][index[1].is_some() as usize]
             [index[2].is_some() as usize][index[3].is_some() as usize][index[4].is_some() as usize]
             [index[5].is_some() as usize][index[6].is_some() as usize][index[7].is_some() as usize]

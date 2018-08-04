@@ -1,5 +1,4 @@
-use banko::Bankoplade;
-use std::num::NonZeroU8;
+use banko::{Bankoplade, Column};
 
 mod column_table;
 mod offset_table;
@@ -12,40 +11,31 @@ pub struct Decoder {
 
 impl Decoder {
     #[inline]
-    #[inline]
     pub fn decode(&self, value: u64) -> Option<Bankoplade> {
         let (mut offset, indexes) = self.offset_table.get(value)?;
 
-        let mut rows: [[Option<NonZeroU8>; 9]; 3] = [[None; 9]; 3];
+        let mut plade = Bankoplade::zero_plade();
 
+        for (col_ndx, (column, index)) in
+            plade.columns_mut().zip(indexes.iter().cloned()).enumerate()
         {
-            let &mut [ref mut row0, ref mut row1, ref mut row2] = &mut rows;
+            let column_values_for_index: &[Column] = self.column_table.get(col_ndx, index)?;
 
-            for (col_ndx, (((out_value0, out_value1), out_value2), index)) in row0
-                .iter_mut()
-                .zip(row1.iter_mut())
-                .zip(row2.iter_mut())
-                .zip(indexes.iter().cloned())
-                .enumerate()
-            {
-                let values: &[[Option<NonZeroU8>; 3]] = self.column_table.get(col_ndx, index)?;
-                let len = values.len() as u64;
-
-                if len == 0 {
-                    return None;
-                }
-
-                let cur_value = values[(offset % len) as usize];
-                offset /= len;
-
-                *out_value0 = cur_value[0];
-                *out_value1 = cur_value[1];
-                *out_value2 = cur_value[2];
+            if column_values_for_index.is_empty() {
+                return None;
             }
+
+            let len = column_values_for_index.len() as u64;
+            let cur_value = column_values_for_index[(offset % len) as usize];
+            offset /= len;
+
+            *column[0] = cur_value[0];
+            *column[1] = cur_value[1];
+            *column[2] = cur_value[2];
         }
 
         if offset == 0 {
-            Some(Bankoplade { rows })
+            Some(plade)
         } else {
             None
         }
