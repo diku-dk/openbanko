@@ -1,12 +1,15 @@
 use nom;
 use nom::types::CompleteStr;
 use std::num;
+use std::num::NonZeroU8;
 use std::u8;
 
 #[derive(Debug, PartialEq, Eq)]
+#[repr(C)]
 pub struct Bankoplade {
-    pub rows: [[Option<u8>; 9]; 3],
+    pub rows: [[Option<NonZeroU8>; 9]; 3],
 }
+assert_eq_size!(same_as_c; Bankoplade, [u8; 27]);
 
 #[inline]
 fn is_felt_char(c: char) -> bool {
@@ -14,20 +17,20 @@ fn is_felt_char(c: char) -> bool {
 }
 
 #[inline]
-fn from_felt_str(s: CompleteStr) -> Result<Option<u8>, num::ParseIntError> {
+fn from_felt_str(s: CompleteStr) -> Result<Option<NonZeroU8>, num::ParseIntError> {
     let n = s.parse::<u8>()?;
-    if 0 < n && n <= 90 {
-        Ok(Some(n))
+    if n <= 90 {
+        Ok(NonZeroU8::new(n))
     } else {
         Ok(None)
     }
 }
 
-named!(felt<CompleteStr, Option<u8> >,
+named!(felt<CompleteStr, Option<NonZeroU8> >,
        map_res!(take_while_m_n!(2, 2, is_felt_char), from_felt_str)
 );
 
-named!(bankopladelinje<CompleteStr, [Option<u8>; 9]>,
+named!(bankopladelinje<CompleteStr, [Option<NonZeroU8>; 9]>,
        do_parse!(
            felt0: terminated!(felt, char!(' ')) >>
            felt1: terminated!(felt, char!(' ')) >>
@@ -56,6 +59,12 @@ named!(bankoplade1<CompleteStr, Bankoplade>, terminated!(bankoplade, eof!()));
 named!(bankoplader<CompleteStr, Vec<Bankoplade>>, terminated!(many1!(bankoplade), eof!()));
 
 impl Bankoplade {
+    pub fn zero_plade() -> Bankoplade {
+        Bankoplade {
+            rows: [[None; 9]; 3],
+        }
+    }
+
     #[inline]
     pub fn print(&self) {
         for row in &self.rows {
@@ -99,15 +108,15 @@ impl Bankoplade {
                 let col = col as u8;
                 if let Some(value) = value {
                     if col == 0 {
-                        if !(1 <= value && value < 10) {
+                        if !(value.get() < 10) {
                             return false;
                         }
                     } else if 1 <= col && col < 8 {
-                        if !(10 * col <= value && value < 10 * (col + 1)) {
+                        if !(10 * col <= value.get() && value.get() < 10 * (col + 1)) {
                             return false;
                         }
                     } else {
-                        if !(80 <= value && value <= 90) {
+                        if !(80 <= value.get() && value.get() <= 90) {
                             return false;
                         }
                     }
@@ -124,10 +133,10 @@ impl Bankoplade {
 
             for &value in &[col1, col2, col3] {
                 if let Some(value) = value {
-                    if value <= last {
+                    if value.get() <= last {
                         return false;
                     }
-                    last = value;
+                    last = value.get();
                 }
             }
 

@@ -1,4 +1,5 @@
 use combinations::Combination;
+use std::num::NonZeroU8;
 use std::u8;
 use typenum::consts::*;
 
@@ -77,9 +78,9 @@ impl ColumnTable {
     pub fn get(
         &self,
         col: usize,
-        row0: Option<u8>,
-        row1: Option<u8>,
-        row2: Option<u8>,
+        row0: Option<NonZeroU8>,
+        row1: Option<NonZeroU8>,
+        row2: Option<NonZeroU8>,
     ) -> Option<(u8, u8)> {
         let sub = match col {
             0 => 0,
@@ -88,7 +89,7 @@ impl ColumnTable {
         };
 
         let row0 = if let Some(row0) = row0 {
-            let row0 = row0.checked_sub(sub)?;
+            let row0 = row0.get().checked_sub(sub)?;
             if row0 == 0 {
                 return None;
             }
@@ -98,7 +99,7 @@ impl ColumnTable {
         };
 
         let row1 = if let Some(row1) = row1 {
-            let row1 = row1.checked_sub(sub)?;
+            let row1 = row1.get().checked_sub(sub)?;
             if row1 == 0 {
                 return None;
             }
@@ -108,7 +109,7 @@ impl ColumnTable {
         };
 
         let row2 = if let Some(row2) = row2 {
-            let row2 = row2.checked_sub(sub)?;
+            let row2 = row2.get().checked_sub(sub)?;
             if row2 == 0 {
                 return None;
             }
