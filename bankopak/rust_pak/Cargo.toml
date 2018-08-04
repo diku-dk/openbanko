@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "banko-bins",
+    "banko-lib",
+    "banko-static",
+]
