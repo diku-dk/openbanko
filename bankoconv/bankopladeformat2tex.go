@@ -12,7 +12,7 @@ func main() {
 	reader := banko.NewBankoPladeReader()
 
 	os.Stdout.Write([]byte(`\documentclass{article}
-\usepackage[a4paper,landscape,margin=12mm]{geometry}
+\usepackage[a4paper,landscape,margin=12mm,top=2cm,bottom=2cm]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[danish]{babel}
@@ -35,14 +35,12 @@ func main() {
 
 	rowt, err := template.New("row").Funcs(funcMap).Parse(`{{if even .Num}}\topskip0pt
 \vspace*{\fill}{{end}}{{if odd .Num}}\vspace{16mm}{{end}}
-\begin{tabular}{|r|r|r|r|r|r|r|r|r|}
+\begin{center}\begin{tabular}{|r|r|r|r|r|r|r|r|r|}
 \hline
 {{range $row := .Plade}}{{range $ii, $f := $row}}{{if gt $ii 0}} & {{end}}\begin{minipage}[t]{20mm}\begin{center}{{if gt $f 0}}{{$f}}{{end}}\end{center}\end{minipage}{{end}}\\[5mm]\hline
-{{end}}\end{tabular}
-{{if (odd .Num) and .More}}\vspace*{\fill}
-\newpage
-
-{{end}}`)
+{{end}}\end{tabular}\end{center}
+{{if (even .Num)}}\newpage{{end}}
+`)
 	if err != nil {
 		log.Fatal(err)
 	}
