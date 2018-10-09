@@ -1,0 +1,12 @@
+#!/bin/sh
+
+n="$1"
+if ! [ "$n" ]; then
+    echo 'error: you must specify the number of requested boards as the first argument' > /dev/stderr
+    exit 1
+fi
+
+base="$(dirname "$0")"
+cd "$base/../bankopak"
+make -q
+./bankopak -d 8 < /dev/urandom | head -n $(expr 4 '*' $n)
