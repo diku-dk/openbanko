@@ -7,8 +7,8 @@ type board = (row, row, row)
 
 let contains (b: board) (c: num) =
   let row_contains (r: row) =
-    r.1 == c || r.2 == c || r.3 == c || r.4 == c || r.5 == c
-  in row_contains b.1 || row_contains b.2 || row_contains b.3
+    r.0 == c || r.1 == c || r.2 == c || r.3 == c || r.4 == c
+  in row_contains b.0 || row_contains b.1 || row_contains b.2
 
 import "lib/github.com/diku-dk/cpprandom/random"
 
@@ -20,7 +20,7 @@ module rng = uniform_int_distribution i32 E
 
 -- Fisher-Yates shuffle.
 let ryst_posen [n] (r: E.rng) (p: [n]num) =
-  loop (r, p) = (r, copy p) for i in n-1..n-2...1 do unsafe
+  loop (r, p) = (r, copy p) for i in n-1..n-2...1 do #[unsafe]
     let (r, j) = rng.rand (0, i) r
     let elem_j = p[j]
     let p[j] = p[i]
@@ -39,14 +39,14 @@ type winnage = {one_row: i32, two_rows: i32, three_rows: i32}
 
 let turns_to_win (picks: []num) (board: board): winnage =
   (loop (remaining, i, {one_row, two_rows, three_rows}) =
-        (15, 0, {one_row=0, two_rows=0, three_rows=0})
+        (15, 0i32, {one_row=0, two_rows=0, three_rows=0})
    while remaining > 0 && i < length picks do
-     if unsafe board `contains` picks[i]
+     if #[unsafe] board `contains` picks[i]
      then (remaining - 1, i+1,
            {one_row = if remaining == 11 then i+1 else one_row,
             two_rows = if remaining == 6 then i+1 else two_rows,
             three_rows = if remaining == 1 then i+1 else three_rows})
-     else (remaining, i+1, {one_row, two_rows, three_rows})).3
+     else (remaining, i+1, {one_row, two_rows, three_rows})).2
 
 type winner = {who: i32, len: i32 }
 type winners = {one_row:    winner,
@@ -83,7 +83,7 @@ let run_game (boards: []board) (picks: []num): winners =
   |> map (turns_to_win picks)
   |> find_winners
 
-type game_winners = []winners
+type~ game_winners = []winners
 
 -- | Main simulation entry point.
 entry run [num_boards] (seed: i32)
