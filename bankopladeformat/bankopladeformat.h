@@ -80,7 +80,7 @@ static void banko_writer_board(struct banko_writer *writer, const struct board *
 }
 
 static void banko_writer_close(struct banko_writer *writer) {
-  writer = writer;
+  (void)writer;
   return;
 }
 
